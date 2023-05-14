@@ -4,7 +4,8 @@ use std::path::Path;
 
 use crossterm::{cursor, QueueableCommand, terminal};
 
-use crate::gui::actions::{ActionResult, handle_next_action};
+use crate::gui::action::ActionResult;
+use crate::gui::ActionMap;
 use crate::gui::view::View;
 use crate::state::State;
 
@@ -19,6 +20,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 	stdout().flush()?;
 	
 	let mut view = View::stdout();
+	let actions = ActionMap::new();
 	
 	let mut state = State::with_root_path(Path::new("/"));
 	state.tree.expand(state.tree.root_id);
@@ -27,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 		view.render_state(&state)?;
 		
 		loop {
-			match handle_next_action(&mut state)? {
+			match actions.handle_next_action(&mut state)? {
 				ActionResult::Nothing => {}
 				ActionResult::Redraw => {
 					continue 'render;
