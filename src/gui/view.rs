@@ -2,13 +2,14 @@ use std::ffi::OsStr;
 use std::io;
 use std::io::{stdout, Stdout, Write};
 
-use crossterm::{Command, QueueableCommand};
-use crossterm::cursor::{MoveTo, MoveToNextLine};
+use crossterm::{Command, QueueableCommand, terminal};
+use crossterm::cursor::MoveTo;
 use crossterm::style::{Color, ContentStyle, Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize};
 use crossterm::terminal::{Clear, ClearType};
+use slab_tree::{NodeId, NodeRef};
 
 use crate::file::{FileEntry, FileKind, Permission};
-use crate::state::State;
+use crate::state::{FileSystemTree, Node, State};
 
 type R = io::Result<()>;
 
@@ -27,24 +28,44 @@ impl View {
 	}
 	
 	pub fn render_state(&mut self, state: &State) -> R {
-		self.queue(Clear(ClearType::All))?;
-		self.queue(MoveTo(0, 0))?;
+		let terminal_rows = terminal::size()?.1 as usize;
 		
-		if let Some(root) = state.tree.get(state.tree.root_id) {
-			for node in root.traverse_pre_order() {
-				let level = node.ancestors().count();
-				self.print_node(level, &node.data().entry, node.node_id() == state.selected_id)?;
-			}
+		if let Some(middle_node) = state.tree.get(state.selected_id).or_else(|| state.tree.get(state.tree.root_id)) {
+			self.render_tree(state, terminal_rows, middle_node)?;
+			self.out.flush()?;
 		}
 		
-		self.out.flush()?;
 		Ok(())
 	}
 	
-	fn print_node(&mut self, level: usize, entry: &FileEntry, is_selected: bool) -> R {
+	fn render_tree(&mut self, state: &State, terminal_rows: usize, middle_node: NodeRef<Node>) -> R {
+		let displayed_rows = collect_displayed_rows(state, terminal_rows, middle_node);
+		
+		for (index, row) in displayed_rows.iter().enumerate() {
+			if let Ok(row_index) = u16::try_from(index) {
+				self.render_node(row_index, row.level, row.entry, row.node_id == state.selected_id)?;
+			} else {
+				break;
+			}
+		};
+		
+		for y in displayed_rows.len()..terminal_rows {
+			if let Ok(row_index) = u16::try_from(y) {
+				self.queue(MoveTo(0, row_index))?;
+				self.queue(Clear(ClearType::UntilNewLine))?;
+			} else {
+				break;
+			}
+		}
+		
+		Ok(())
+	}
+	
+	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, is_selected: bool) -> R {
 		let name = entry.name().and_then(OsStr::to_str).unwrap_or("???");
 		let mode = entry.mode();
 		
+		self.queue(MoveTo(0, row))?;
 		self.queue(ResetColor)?;
 		self.queue(Print(" ".repeat(level)))?;
 		
@@ -78,8 +99,7 @@ impl View {
 		self.print_permission(others.write(), 'w', Color::DarkRed)?;
 		self.print_permission_or_special(others.execute(), mode.is_sticky(), 'x', 'T', 't', Color::DarkGreen)?;
 		
-		self.queue(MoveToNextLine(1))?;
-		
+		self.queue(Clear(ClearType::UntilNewLine))?;
 		Ok(())
 	}
 	
@@ -126,4 +146,59 @@ impl View {
 	fn print_char(&mut self, char: char, color: Color) -> R {
 		self.queue(Print(ContentStyle::new().with(color).apply(char)))
 	}
+}
+
+struct NodeRow<'a> {
+	level: usize,
+	node_id: NodeId,
+	entry: &'a FileEntry,
+}
+
+impl<'a> From<&NodeRef<'a, Node>> for NodeRow<'a> {
+	fn from(node: &NodeRef<'a, Node>) -> Self {
+		return Self {
+			level: node.ancestors().count(),
+			node_id: node.node_id(),
+			entry: &node.data().entry,
+		};
+	}
+}
+
+fn collect_displayed_rows<'a>(state: &'a State, terminal_rows: usize, middle_node: NodeRef<'a, Node>) -> Vec<NodeRow<'a>> {
+	let mut displayed_rows = Vec::with_capacity(terminal_rows);
+	displayed_rows.push(NodeRow::from(&middle_node));
+	
+	let mut cursor_up_id = Some(middle_node.node_id());
+	let mut cursor_down_id = Some(middle_node.node_id());
+	
+	while displayed_rows.len() < terminal_rows {
+		if let Some(next_node_up) = move_cursor(&mut cursor_up_id, state, FileSystemTree::get_node_above) {
+			displayed_rows.insert(0, NodeRow::from(&next_node_up));
+		}
+		
+		if displayed_rows.len() >= terminal_rows {
+			break;
+		}
+		
+		if let Some(next_node_down) = move_cursor(&mut cursor_down_id, state, FileSystemTree::get_node_below) {
+			displayed_rows.push(NodeRow::from(&next_node_down));
+		}
+		
+		if cursor_up_id.is_none() && cursor_down_id.is_none() {
+			break;
+		}
+	}
+	
+	displayed_rows
+}
+
+fn move_cursor<'a, F>(cursor: &mut Option<NodeId>, state: &'a State, func: F) -> Option<NodeRef<'a, Node>> where F: FnOnce(&FileSystemTree, &NodeRef<Node>) -> Option<NodeId> {
+	let next_node = cursor
+		.and_then(|id| state.tree.get(id))
+		.and_then(|node| func(&state.tree, &node))
+		.and_then(|id| state.tree.get(id));
+	
+	*cursor = next_node.as_ref().map(NodeRef::node_id);
+	
+	next_node
 }
