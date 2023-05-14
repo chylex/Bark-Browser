@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use slab_tree::NodeId;
+use slab_tree::{NodeId, NodeRef};
 
 pub use self::tree::FileSystemTree;
 pub use self::tree::Node;
@@ -18,5 +18,9 @@ impl State {
 		let selected_id = tree.root_id;
 		
 		Self { tree, selected_id }
+	}
+	
+	pub fn get_selected_node(&self) -> Option<NodeRef<Node>> {
+		return self.tree.get(self.selected_id);
 	}
 }

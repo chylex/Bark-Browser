@@ -8,3 +8,7 @@ version = "0.26.1"
 
 [dependencies.slab_tree]
 version = "0.3.2"
+
+[patch.crates-io.slab_tree]
+git = "https://github.com/jsinger67/slab-tree.git"
+branch = "set_root_fix"

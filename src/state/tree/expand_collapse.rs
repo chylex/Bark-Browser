@@ -1,7 +1,7 @@
 use slab_tree::{NodeId, NodeMut, RemoveBehavior};
 
-use crate::file::FileEntry;
 use crate::state::{FileSystemTree, Node};
+use crate::state::tree::get_directory_children;
 
 impl FileSystemTree {
 	pub fn expand(&mut self, node_id: NodeId) -> bool {
@@ -41,21 +41,14 @@ fn expand_node(node: &mut NodeMut<Node>) -> bool {
 	
 	data.is_expanded = true;
 	
-	return if let Some(child_entries) = data.entry.path().and_then(|path| std::fs::read_dir(path).ok()) {
-		let mut children = child_entries
-			.map(|e| e.as_ref().map(FileEntry::from).unwrap_or_else(|_| FileEntry::dummy()))
-			.collect::<Vec<_>>();
-		
-		children.sort_by(|f1, f2| f1.name().cmp(&f2.name()));
-		
+	if let Some(children) = get_directory_children(&data.entry) {
 		for child in children {
 			node.append(Node::from(child));
 		}
-		
 		true
 	} else {
 		false
-	};
+	}
 }
 
 fn collapse_node(node: &mut NodeMut<Node>) -> bool {

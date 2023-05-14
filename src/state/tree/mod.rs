@@ -1,3 +1,4 @@
+use std::fs::ReadDir;
 use std::path::Path;
 
 use slab_tree::{NodeId, NodeMut, NodeRef, Tree};
@@ -6,6 +7,7 @@ use crate::file::FileEntry;
 
 mod above_below;
 mod expand_collapse;
+mod root_node;
 
 pub struct FileSystemTree {
 	inner: Tree<Node>,
@@ -38,4 +40,19 @@ impl From<FileEntry> for Node {
 	fn from(entry: FileEntry) -> Self {
 		Self { entry, is_expanded: false }
 	}
+}
+
+fn get_directory_children(entry: &FileEntry) -> Option<Vec<FileEntry>> {
+	entry.path()
+	     .and_then(|path| std::fs::read_dir(path).ok())
+	     .map(read_directory_children)
+}
+
+fn read_directory_children(reader: ReadDir) -> Vec<FileEntry> {
+	let mut children = reader
+		.map(|e| e.as_ref().map(FileEntry::from).unwrap_or_else(|_| FileEntry::dummy()))
+		.collect::<Vec<_>>();
+	
+	children.sort_by(|f1, f2| f1.name().cmp(&f2.name()));
+	children
 }

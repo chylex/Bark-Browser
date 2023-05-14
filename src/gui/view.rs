@@ -30,7 +30,7 @@ impl View {
 	pub fn render_state(&mut self, state: &State) -> R {
 		let terminal_rows = terminal::size()?.1 as usize;
 		
-		if let Some(middle_node) = state.tree.get(state.selected_id).or_else(|| state.tree.get(state.tree.root_id)) {
+		if let Some(middle_node) = state.get_selected_node().or_else(|| state.tree.get(state.tree.root_id)) {
 			self.render_tree(state, terminal_rows, middle_node)?;
 			self.out.flush()?;
 		}

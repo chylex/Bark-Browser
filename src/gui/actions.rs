@@ -4,7 +4,7 @@ use std::io;
 use crossterm::event::{Event, KeyCode};
 
 use crate::gui::action::{Action, ActionResult, ExpandCollapse, Quit};
-use crate::gui::action::movement::{MoveDown, MoveUp};
+use crate::gui::action::movement::{MoveDown, MoveOrTraverseUpParent, MoveUp};
 use crate::state::State;
 
 pub struct ActionMap {
@@ -15,10 +15,12 @@ impl ActionMap {
 	pub fn new() -> Self {
 		let mut me = Self { keybinds: HashMap::new() };
 		me.add_char_mapping(' ', ExpandCollapse);
+		me.add_char_mapping('h', MoveOrTraverseUpParent);
 		me.add_char_mapping('j', MoveDown);
 		me.add_char_mapping('k', MoveUp);
 		me.add_char_mapping('q', Quit);
 		me.add_key_mapping(KeyCode::Down, MoveDown);
+		me.add_key_mapping(KeyCode::Left, MoveOrTraverseUpParent);
 		me.add_key_mapping(KeyCode::Up, MoveUp);
 		me
 	}
