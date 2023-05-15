@@ -66,12 +66,17 @@ impl FileEntry {
 
 impl From<&DirEntry> for FileEntry {
 	fn from(entry: &DirEntry) -> Self {
-		return Self::new(entry.path(), Some(entry.file_name()), entry.metadata().as_ref());
+		let path = entry.path();
+		let path = path.canonicalize().unwrap_or(path);
+		return Self::new(path, Some(entry.file_name()), entry.metadata().as_ref());
 	}
 }
 
 impl From<&Path> for FileEntry {
 	fn from(path: &Path) -> Self {
-		return Self::new(path.to_path_buf(), path.file_name().map(|n| n.to_os_string()), path.metadata().as_ref());
+		let path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+		let name = path.file_name().map(OsStr::to_os_string);
+		let metadata = path.metadata();
+		return Self::new(path, name, metadata.as_ref());
 	}
 }
