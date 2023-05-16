@@ -5,11 +5,14 @@ use crate::state::{FileSystemTree, Node, State};
 
 pub use self::parents::MoveOrTraverseUpParent;
 pub use self::parents::MoveToParent;
+pub use self::siblings::MoveToNextSibling;
+pub use self::siblings::MoveToPreviousSibling;
 pub use self::up_down::MoveDown;
 pub use self::up_down::MoveUp;
 
-mod up_down;
 mod parents;
+mod siblings;
+mod up_down;
 
 pub trait MovementAction {
 	fn get_target(tree: &FileSystemTree, selected_node: &NodeRef<Node>) -> Option<NodeId> where Self: Sized;
