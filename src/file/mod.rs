@@ -1,4 +1,4 @@
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::fs::{DirEntry, Metadata};
 use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
@@ -6,15 +6,17 @@ use std::time::SystemTime;
 
 pub use crate::file::kind::FileKind;
 pub use crate::file::mode::{FileMode, Permission, PermissionClassMode};
+pub use crate::file::name::FileName;
 pub use crate::file::owner::FileOwner;
 
 mod kind;
 mod mode;
 mod owner;
+mod name;
 
 pub struct FileEntry {
 	path: Option<PathBuf>,
-	name: Option<OsString>,
+	name: FileName,
 	kind: FileKind,
 	mode: FileMode,
 	owner: Option<FileOwner>,
@@ -22,13 +24,10 @@ pub struct FileEntry {
 }
 
 impl FileEntry {
-	fn new(path: PathBuf, name: Option<OsString>, metadata: Result<&Metadata, &std::io::Error>) -> Self {
-		let path = path.canonicalize().unwrap_or(path);
-		let name = name.unwrap_or_else(|| path.as_os_str().to_os_string());
-		
+	fn new(path: PathBuf, name: FileName, metadata: Result<&Metadata, &std::io::Error>) -> Self {
 		Self {
-			path: Some(path),
-			name: Some(name),
+			path: Some(path.canonicalize().unwrap_or(path)),
+			name,
 			kind: metadata.map(FileKind::from).unwrap_or(FileKind::Unknown),
 			mode: metadata.map(|m| FileMode::Known(m.mode())).unwrap_or(FileMode::Unknown),
 			owner: metadata.map(FileOwner::from).ok(),
@@ -39,28 +38,28 @@ impl FileEntry {
 	pub fn dummy() -> Self {
 		Self {
 			path: None,
-			name: None,
+			name: FileName::dummy(),
 			kind: FileKind::Unknown,
 			mode: FileMode::Unknown,
 			owner: None,
-			mtime: None
+			mtime: None,
 		}
 	}
 	
 	pub fn path(&self) -> Option<&Path> {
-		return self.path.as_deref();
+		self.path.as_deref()
 	}
 	
-	pub fn name(&self) -> Option<&OsStr> {
-		return self.name.as_deref();
+	pub fn name(&self) -> &FileName {
+		&self.name
 	}
 	
-	pub fn kind(&self) -> FileKind {
-		self.kind
+	pub fn kind(&self) -> &FileKind {
+		&self.kind
 	}
 	
-	pub fn mode(&self) -> FileMode {
-		self.mode
+	pub fn mode(&self) -> &FileMode {
+		&self.mode
 	}
 }
 
@@ -68,14 +67,20 @@ impl From<&DirEntry> for FileEntry {
 	fn from(entry: &DirEntry) -> Self {
 		let path = entry.path();
 		let path = path.canonicalize().unwrap_or(path);
-		return Self::new(path, Some(entry.file_name()), entry.metadata().as_ref());
+		let name = FileName::from(entry.file_name());
+		return Self::new(path, name, entry.metadata().as_ref());
 	}
 }
 
 impl From<&Path> for FileEntry {
 	fn from(path: &Path) -> Self {
 		let path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
-		let name = path.file_name().map(OsStr::to_os_string);
+		let name = if path == Path::new("/") {
+			FileName::from("/")
+		} else {
+			path.file_name().map(OsStr::to_os_string).map(FileName::from).unwrap_or_else(FileName::dummy)
+		};
+		
 		let metadata = path.metadata();
 		return Self::new(path, name, metadata.as_ref());
 	}

@@ -3,11 +3,10 @@ name = "bark"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies.crossterm]
-version = "0.26.1"
-
-[dependencies.slab_tree]
-version = "0.3.2"
+[dependencies]
+crossterm = "0.26.1"
+slab_tree = "0.3.2"
+unicode-segmentation = "1.10.1"
 
 [patch.crates-io.slab_tree]
 git = "https://github.com/jsinger67/slab-tree.git"

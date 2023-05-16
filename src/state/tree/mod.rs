@@ -53,6 +53,6 @@ fn read_directory_children(reader: ReadDir) -> Vec<FileEntry> {
 		.map(|e| e.as_ref().map(FileEntry::from).unwrap_or_else(|_| FileEntry::dummy()))
 		.collect::<Vec<_>>();
 	
-	children.sort_by(|f1, f2| f1.name().cmp(&f2.name()));
+	children.sort_by(|f1, f2| f1.name().str().cmp(f2.name().str()));
 	children
 }

@@ -50,6 +50,8 @@ impl ActionMap {
 			if let Some(action) = self.keybinds.get(&key_binding) {
 				return Ok(action.perform(state));
 			}
+		} else if let Event::Resize(_, _) = event {
+			return Ok(ActionResult::Redraw);
 		}
 		
 		Ok(ActionResult::Nothing)
