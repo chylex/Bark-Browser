@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+chrono = { version = "0.4.24", features = ["std", "clock"], default-features = false }
 crossterm = "0.26.1"
 slab_tree = "0.3.2"
 unicode-segmentation = "1.10.1"

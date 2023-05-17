@@ -64,7 +64,7 @@ impl<'a> SingleFrame<'a> {
 	fn render_tree(&mut self, middle_node: NodeRef<Node>) -> R {
 		let displayed_rows = self.collect_displayed_rows(self.rows, middle_node);
 		
-		let max_name_column_width = self.cols.saturating_sub(components::file_permissions::COLUMN_WIDTH + 2);
+		let max_name_column_width = self.cols.saturating_sub(components::date_time::COLUMN_WIDTH + 2 + components::file_permissions::COLUMN_WIDTH + 2);
 		let name_column_width = min(max_name_column_width, displayed_rows.iter().map(|row| row.level + row.entry.name().len()).max().unwrap_or(0));
 		
 		for (index, row) in displayed_rows.iter().enumerate() {
@@ -132,14 +132,22 @@ impl<'a> SingleFrame<'a> {
 		
 		components::file_name::print(self, entry.name(), level, name_column_width, is_selected)?;
 		
-		self.queue(ResetColor)?;
-		self.queue(Print("  "))?;
+		self.print_column_separator()?;
+		
+		components::date_time::print(self, entry.modified_time())?;
+		
+		self.print_column_separator()?;
 		
 		components::file_permissions::print(self, entry.kind(), entry.mode())?;
 		
 		self.queue(ResetColor)?;
 		self.queue(Clear(ClearType::UntilNewLine))?;
 		Ok(())
+	}
+	
+	fn print_column_separator(&mut self) -> R {
+		self.queue(ResetColor)?;
+		self.queue(Print("  "))
 	}
 }
 

@@ -61,6 +61,10 @@ impl FileEntry {
 	pub fn mode(&self) -> &FileMode {
 		&self.mode
 	}
+	
+	pub fn modified_time(&self) -> Option<&SystemTime> {
+		self.mtime.as_ref()
+	}
 }
 
 impl From<&DirEntry> for FileEntry {
