@@ -4,14 +4,15 @@ use std::io::{stdout, Stdout, Write};
 
 use crossterm::{Command, QueueableCommand, terminal};
 use crossterm::cursor::MoveTo;
-use crossterm::style::{Color, ContentStyle, Print, ResetColor, SetBackgroundColor, SetForegroundColor, Stylize};
+use crossterm::style::{Print, ResetColor};
 use crossterm::terminal::{Clear, ClearType};
 use slab_tree::{NodeId, NodeRef};
 
-use crate::file::{FileEntry, FileKind, Permission};
+use crate::file::FileEntry;
+use crate::gui::components;
 use crate::state::{FileSystemTree, Node, State};
 
-type R = io::Result<()>;
+pub type R = io::Result<()>;
 
 pub struct View {
 	out: Stdout,
@@ -34,7 +35,7 @@ impl View {
 	}
 }
 
-struct SingleFrame<'a> {
+pub struct SingleFrame<'a> {
 	view: &'a mut View,
 	cols: usize,
 	rows: usize,
@@ -42,27 +43,28 @@ struct SingleFrame<'a> {
 }
 
 impl<'a> SingleFrame<'a> {
-	fn queue(&mut self, command: impl Command) -> R {
+	pub fn queue(&mut self, command: impl Command) -> R {
 		self.view.out.queue(command)?;
 		Ok(())
+	}
+	
+	pub fn flush(&mut self) -> R {
+		self.view.out.flush()
 	}
 	
 	fn render(&mut self) -> R {
 		if let Some(middle_node) = self.state.get_selected_node().or_else(|| self.state.tree.get(self.state.tree.root_id)) {
 			self.render_tree(middle_node)?;
-			self.view.out.flush()?;
+			self.flush()?;
 		}
 		
 		Ok(())
 	}
 	
-	// Padding + Type + Owner + Group + Other
-	const PERMISSION_COLUMN_WIDTH: usize = 2 + 1 + 3 + 3 + 3;
-	
 	fn render_tree(&mut self, middle_node: NodeRef<Node>) -> R {
 		let displayed_rows = self.collect_displayed_rows(self.rows, middle_node);
 		
-		let max_name_column_width = self.cols - Self::PERMISSION_COLUMN_WIDTH;
+		let max_name_column_width = self.cols.saturating_sub(components::file_permissions::COLUMN_WIDTH + 2);
 		let name_column_width = min(max_name_column_width, displayed_rows.iter().map(|row| row.level + row.entry.name().len()).max().unwrap_or(0));
 		
 		for (index, row) in displayed_rows.iter().enumerate() {
@@ -126,99 +128,18 @@ impl<'a> SingleFrame<'a> {
 	}
 	
 	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, name_column_width: usize, is_selected: bool) -> R {
-		let name = entry.name();
-		let mode = entry.mode();
-		
 		self.queue(MoveTo(0, row))?;
+		
+		components::file_name::print(self, entry.name(), level, name_column_width, is_selected)?;
+		
 		self.queue(ResetColor)?;
-		self.queue(Print(" ".repeat(level)))?;
-		
-		if is_selected {
-			self.queue(SetForegroundColor(Color::Black))?;
-			self.queue(SetBackgroundColor(Color::White))?;
-		} else {
-			self.queue(SetForegroundColor(Color::White))?;
-			self.queue(SetBackgroundColor(Color::Black))?;
-		}
-		
-		self.queue(Print(name))?;
-		self.queue(ResetColor)?;
-		
-		let name_width = name.len() + level;
-		if name_width <= name_column_width {
-			self.queue(Print(" ".repeat(name_column_width - name_width)))?;
-		} else if let Ok(x) = u16::try_from(name_column_width) {
-			self.queue(MoveTo(if x > 0 { x - 1 } else { 0 }, row))?;
-			self.queue(SetForegroundColor(Color::DarkGrey))?;
-			self.queue(Print("~"))?;
-			self.queue(ResetColor)?;
-		}
 		self.queue(Print("  "))?;
 		
-		self.print_kind(entry.kind())?;
+		components::file_permissions::print(self, entry.kind(), entry.mode())?;
 		
-		let user = mode.user();
-		let group = mode.group();
-		let others = mode.others();
-		
-		self.print_permission(user.read(), 'r', Color::DarkBlue)?;
-		self.print_permission(user.write(), 'w', Color::DarkRed)?;
-		self.print_permission_or_special(user.execute(), mode.is_setuid(), 'x', 'S', 's', Color::DarkGreen)?;
-		
-		self.print_permission(group.read(), 'r', Color::DarkBlue)?;
-		self.print_permission(group.write(), 'w', Color::DarkRed)?;
-		self.print_permission_or_special(group.execute(), mode.is_setgid(), 'x', 'S', 's', Color::DarkGreen)?;
-		
-		self.print_permission(others.read(), 'r', Color::DarkBlue)?;
-		self.print_permission(others.write(), 'w', Color::DarkRed)?;
-		self.print_permission_or_special(others.execute(), mode.is_sticky(), 'x', 'T', 't', Color::DarkGreen)?;
-		
+		self.queue(ResetColor)?;
 		self.queue(Clear(ClearType::UntilNewLine))?;
 		Ok(())
-	}
-	
-	fn print_kind(&mut self, kind: &FileKind) -> R {
-		let c = match kind {
-			FileKind::File { size: _ } => { '-' }
-			FileKind::Directory => { 'd' }
-			FileKind::Symlink => { 'l' }
-			FileKind::BlockDevice => { 'b' }
-			FileKind::CharDevice => { 'c' }
-			FileKind::Pipe => { 'p' }
-			FileKind::Socket => { 's' }
-			FileKind::Unknown => { '?' }
-		};
-		
-		self.print_char(c, Color::Grey)
-	}
-	
-	fn print_permission(&mut self, permission: Permission, c: char, color: Color) -> R {
-		let (c, color) = match permission {
-			Permission::Yes => {
-				(c, color)
-			}
-			Permission::No => {
-				('-', Color::Grey)
-			}
-			Permission::Unknown => {
-				('?', Color::DarkGrey)
-			}
-		};
-		
-		self.print_char(c, color)
-	}
-	
-	fn print_permission_or_special(&mut self, permission: Permission, special: Option<bool>, permission_only_char: char, special_only_char: char, permission_and_special_char: char, color: Color) -> R {
-		if special == Some(true) {
-			let char = if permission == Permission::Yes { permission_and_special_char } else { special_only_char };
-			self.print_char(char, color)
-		} else {
-			self.print_permission(permission, permission_only_char, color)
-		}
-	}
-	
-	fn print_char(&mut self, char: char, color: Color) -> R {
-		self.queue(Print(ContentStyle::new().with(color).apply(char)))
 	}
 }
 
