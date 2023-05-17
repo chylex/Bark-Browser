@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io;
 
-use crossterm::event::{Event, KeyCode, KeyModifiers};
+use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
 use crate::gui::action::{Action, ActionResult, ExpandCollapse, Quit};
 use crate::gui::action::movement::{MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp};
@@ -41,6 +41,10 @@ impl ActionMap {
 		let event = crossterm::event::read()?;
 		
 		if let Event::Key(key) = event {
+			if key.kind == KeyEventKind::Release {
+				return Ok(ActionResult::Nothing);
+			}
+			
 			let key_binding = if let KeyCode::Char(char) = key.code {
 				KeyBinding::Char(char)
 			} else {
