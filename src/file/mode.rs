@@ -1,3 +1,5 @@
+use std::fs::Metadata;
+
 #[derive(Copy, Clone)]
 pub enum FileMode {
 	Known(u32),
@@ -45,6 +47,20 @@ impl FileMode {
 		} else {
 			None
 		}
+	}
+}
+
+impl From<&Metadata> for FileMode {
+	#[cfg(unix)]
+	fn from(metadata: &Metadata) -> Self {
+		use std::os::unix::fs::MetadataExt;
+		
+		Self::Known(metadata.mode())
+	}
+	
+	#[cfg(not(unix))]
+	fn from(_metadata: &Metadata) -> Self {
+		Self::Unknown
 	}
 }
 

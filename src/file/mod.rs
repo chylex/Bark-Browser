@@ -1,6 +1,5 @@
 use std::ffi::OsStr;
 use std::fs::{DirEntry, Metadata};
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
@@ -29,8 +28,8 @@ impl FileEntry {
 			path: Some(path.canonicalize().unwrap_or(path)),
 			name,
 			kind: metadata.map(FileKind::from).unwrap_or(FileKind::Unknown),
-			mode: metadata.map(|m| FileMode::Known(m.mode())).unwrap_or(FileMode::Unknown),
-			owner: metadata.map(FileOwner::from).ok(),
+			mode: metadata.map(FileMode::from).unwrap_or(FileMode::Unknown),
+			owner: metadata.ok().and_then(|m| FileOwner::try_from(m).ok()),
 			mtime: metadata.ok().and_then(|m| m.modified().ok()),
 		}
 	}
