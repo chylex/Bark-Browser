@@ -2,6 +2,12 @@ pub trait IntegerLength {
 	fn int_len(self) -> usize;
 }
 
+impl IntegerLength for u64 {
+	fn int_len(self) -> usize {
+		(self.checked_ilog10().unwrap_or(0) + 1) as usize
+	}
+}
+
 impl IntegerLength for u32 {
 	fn int_len(self) -> usize {
 		(self.checked_ilog10().unwrap_or(0) + 1) as usize

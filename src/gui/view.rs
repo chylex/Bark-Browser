@@ -8,7 +8,7 @@ use crossterm::style::{Print, ResetColor};
 use crossterm::terminal::{Clear, ClearType};
 use slab_tree::{NodeId, NodeRef};
 
-use crate::file::{FileEntry, FileOwnerNameCache};
+use crate::file::{FileEntry, FileKind, FileOwnerNameCache};
 use crate::gui::components;
 use crate::state::{FileSystemTree, Node, State};
 
@@ -120,7 +120,7 @@ impl<'a> SingleFrame<'a> {
 		let user = displayed_rows.iter().map(|row| self.file_owner_name_cache.get_user(row.entry.uid()).len()).max().unwrap_or(0);
 		let group = displayed_rows.iter().map(|row| self.file_owner_name_cache.get_group(row.entry.gid()).len()).max().unwrap_or(0);
 		
-		let name = min(name, self.cols.saturating_sub(components::date_time::COLUMN_WIDTH + 2 + user + 1 + group + 2 + components::file_permissions::COLUMN_WIDTH + 2));
+		let name = min(name, self.cols.saturating_sub(2 + components::file_size::COLUMN_WIDTH + 2 + components::date_time::COLUMN_WIDTH + 2 + user + 1 + group + 2 + components::file_permissions::COLUMN_WIDTH));
 		
 		ColumnWidths { name, user, group }
 	}
@@ -141,6 +141,10 @@ impl<'a> SingleFrame<'a> {
 		self.view.queue(MoveTo(0, row))?;
 		
 		components::file_name::print(self.view, entry.name(), level, column_widths.name, is_selected)?;
+		
+		self.print_column_separator()?;
+		
+		components::file_size::print(self.view, if let FileKind::File { size } = entry.kind() { Some(*size) } else { None })?;
 		
 		self.print_column_separator()?;
 		
