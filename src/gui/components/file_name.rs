@@ -25,7 +25,6 @@ pub fn print(view: &mut View, name: &FileName, level: usize, max_width: usize, i
 	view.queue(Print(name))?;
 	
 	if let Some((x, y)) = truncate_at {
-		view.queue(Print(name))?;
 		view.queue(MoveTo(x, y))?;
 		view.queue(SetForegroundColor(Color::DarkGrey))?;
 		view.queue(Print("~"))?;
