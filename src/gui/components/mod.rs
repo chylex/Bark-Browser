@@ -10,4 +10,5 @@
 mod column;
 pub mod date_time;
 pub mod file_name;
+pub mod file_owner;
 pub mod file_permissions;

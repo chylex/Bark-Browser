@@ -4,6 +4,7 @@ use chrono::{Datelike, DateTime, Local, Timelike, Utc};
 use crossterm::style::{Print, ResetColor};
 
 use crate::gui::view::{R, View};
+use crate::util;
 
 // Month + Space + Day + Space + Hour + Colon + Minute
 pub const COLUMN_WIDTH: usize = 3 + 1 + 2 + 1 + 2 + 1 + 2;
@@ -48,7 +49,7 @@ pub fn print(view: &mut View, system_time: Option<&SystemTime>) -> R {
 fn print_year_padded(view: &mut View, year: i32) -> R {
 	view.queue(Print(year))?;
 	
-	let year_digits = integer_len(year);
+	let year_digits = util::int_len(year);
 	if year_digits < YEAR_PADDED_WIDTH {
 		view.queue(Print(" ".repeat(YEAR_PADDED_WIDTH - year_digits)))?;
 	}
@@ -74,10 +75,4 @@ fn print_hour_minute_padded(view: &mut View, value: u32) -> R {
 	}
 	
 	view.queue(Print(value))
-}
-
-fn integer_len(n: i32) -> usize {
-	let digit_count = n.abs().checked_ilog10().unwrap_or(1) + 1;
-	let sign_len = if n < 0 { 1 } else { 0 };
-	(digit_count + sign_len) as usize
 }

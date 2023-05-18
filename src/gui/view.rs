@@ -8,7 +8,7 @@ use crossterm::style::{Print, ResetColor};
 use crossterm::terminal::{Clear, ClearType};
 use slab_tree::{NodeId, NodeRef};
 
-use crate::file::FileEntry;
+use crate::file::{FileEntry, FileOwnerNameCache};
 use crate::gui::components;
 use crate::state::{FileSystemTree, Node, State};
 
@@ -32,13 +32,14 @@ impl View {
 		self.out.flush()
 	}
 	
-	pub fn render_state(&mut self, state: &State) -> R {
+	pub fn render_state(&mut self, state: &State, file_owner_name_cache: &mut FileOwnerNameCache) -> R {
 		let terminal_size = terminal::size()?;
 		
 		SingleFrame {
 			view: self,
 			cols: terminal_size.0 as usize,
 			rows: terminal_size.1 as usize,
+			file_owner_name_cache,
 			state,
 		}.render()
 	}
@@ -48,6 +49,7 @@ struct SingleFrame<'a> {
 	view: &'a mut View,
 	cols: usize,
 	rows: usize,
+	file_owner_name_cache: &'a mut FileOwnerNameCache,
 	state: &'a State,
 }
 
@@ -63,13 +65,11 @@ impl<'a> SingleFrame<'a> {
 	
 	fn render_tree(&mut self, middle_node: NodeRef<Node>) -> R {
 		let displayed_rows = self.collect_displayed_rows(self.rows, middle_node);
-		
-		let max_name_column_width = self.cols.saturating_sub(components::date_time::COLUMN_WIDTH + 2 + components::file_permissions::COLUMN_WIDTH + 2);
-		let name_column_width = min(max_name_column_width, displayed_rows.iter().map(|row| row.level + row.entry.name().len()).max().unwrap_or(0));
+		let column_widths = self.calculate_column_widths(&displayed_rows);
 		
 		for (index, row) in displayed_rows.iter().enumerate() {
 			if let Ok(row_index) = u16::try_from(index) {
-				self.render_node(row_index, row.level, row.entry, name_column_width, row.node_id == self.state.selected_id)?;
+				self.render_node(row_index, row.level, row.entry, &column_widths, row.node_id == self.state.selected_id)?;
 			} else {
 				break;
 			}
@@ -115,6 +115,16 @@ impl<'a> SingleFrame<'a> {
 		displayed_rows
 	}
 	
+	fn calculate_column_widths(&mut self, displayed_rows: &[NodeRow]) -> ColumnWidths {
+		let name = displayed_rows.iter().map(|row| row.level + row.entry.name().len()).max().unwrap_or(0);
+		let user = displayed_rows.iter().map(|row| self.file_owner_name_cache.get_user(row.entry.uid()).len()).max().unwrap_or(0);
+		let group = displayed_rows.iter().map(|row| self.file_owner_name_cache.get_group(row.entry.gid()).len()).max().unwrap_or(0);
+		
+		let name = min(name, self.cols.saturating_sub(components::date_time::COLUMN_WIDTH + 2 + user + 1 + group + 2 + components::file_permissions::COLUMN_WIDTH + 2));
+		
+		ColumnWidths { name, user, group }
+	}
+	
 	fn move_cursor<F>(&self, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, Node>> where F: FnOnce(&FileSystemTree, &NodeRef<Node>) -> Option<NodeId> {
 		let tree = &self.state.tree;
 		let next_node = cursor
@@ -127,10 +137,10 @@ impl<'a> SingleFrame<'a> {
 		next_node
 	}
 	
-	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, name_column_width: usize, is_selected: bool) -> R {
+	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, column_widths: &ColumnWidths, is_selected: bool) -> R {
 		self.view.queue(MoveTo(0, row))?;
 		
-		components::file_name::print(self.view, entry.name(), level, name_column_width, is_selected)?;
+		components::file_name::print(self.view, entry.name(), level, column_widths.name, is_selected)?;
 		
 		self.print_column_separator()?;
 		
@@ -138,11 +148,16 @@ impl<'a> SingleFrame<'a> {
 		
 		self.print_column_separator()?;
 		
+		components::file_owner::print(self.view, self.file_owner_name_cache.get_user(entry.uid()), column_widths.user)?;
+		self.view.queue(Print(" "))?;
+		components::file_owner::print(self.view, self.file_owner_name_cache.get_group(entry.gid()), column_widths.group)?;
+		
+		self.print_column_separator()?;
+		
 		components::file_permissions::print(self.view, entry.kind(), entry.mode())?;
 		
 		self.view.queue(ResetColor)?;
-		self.view.queue(Clear(ClearType::UntilNewLine))?;
-		Ok(())
+		self.view.queue(Clear(ClearType::UntilNewLine))
 	}
 	
 	fn print_column_separator(&mut self) -> R {
@@ -165,4 +180,10 @@ impl<'a> From<&NodeRef<'a, Node>> for NodeRow<'a> {
 			entry: &node.data().entry,
 		};
 	}
+}
+
+struct ColumnWidths {
+	name: usize,
+	user: usize,
+	group: usize,
 }

@@ -6,6 +6,7 @@ use std::process::ExitCode;
 
 use crossterm::{cursor, QueueableCommand, terminal};
 
+use crate::file::FileOwnerNameCache;
 use crate::gui::action::ActionResult;
 use crate::gui::ActionMap;
 use crate::gui::view::View;
@@ -14,6 +15,7 @@ use crate::state::State;
 mod file;
 mod gui;
 mod state;
+mod util;
 
 fn main() -> Result<ExitCode, Box<dyn Error>> {
 	let args = env::args_os().skip(1).collect::<Vec<_>>();
@@ -39,8 +41,10 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	let mut state = State::with_root_path(&path.unwrap());
 	state.tree.expand(state.tree.root_id);
 	
+	let mut file_owner_name_cache = FileOwnerNameCache::new();
+	
 	'render: loop {
-		view.render_state(&state)?;
+		view.render_state(&state, &mut file_owner_name_cache)?;
 		
 		loop {
 			match actions.handle_next_action(&mut state)? {

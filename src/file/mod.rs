@@ -6,12 +6,12 @@ use std::time::SystemTime;
 pub use crate::file::kind::FileKind;
 pub use crate::file::mode::{FileMode, Permission, PermissionClassMode};
 pub use crate::file::name::FileName;
-pub use crate::file::owner::FileOwner;
+pub use crate::file::owner::{FileOwner, FileOwnerName, FileOwnerNameCache};
 
 mod kind;
 mod mode;
-mod owner;
 mod name;
+mod owner;
 
 pub struct FileEntry {
 	path: Option<PathBuf>,
@@ -59,6 +59,14 @@ impl FileEntry {
 	
 	pub fn mode(&self) -> &FileMode {
 		&self.mode
+	}
+	
+	pub fn uid(&self) -> Option<u32> {
+		self.owner.as_ref().map(FileOwner::uid)
+	}
+	
+	pub fn gid(&self) -> Option<u32> {
+		self.owner.as_ref().map(FileOwner::gid)
 	}
 	
 	pub fn modified_time(&self) -> Option<&SystemTime> {
