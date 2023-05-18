@@ -23,6 +23,15 @@ impl View {
 		Self { out: stdout() }
 	}
 	
+	pub fn queue(&mut self, command: impl Command) -> R {
+		self.out.queue(command)?;
+		Ok(())
+	}
+	
+	pub fn flush(&mut self) -> R {
+		self.out.flush()
+	}
+	
 	pub fn render_state(&mut self, state: &State) -> R {
 		let terminal_size = terminal::size()?;
 		
@@ -35,7 +44,7 @@ impl View {
 	}
 }
 
-pub struct SingleFrame<'a> {
+struct SingleFrame<'a> {
 	view: &'a mut View,
 	cols: usize,
 	rows: usize,
@@ -43,19 +52,10 @@ pub struct SingleFrame<'a> {
 }
 
 impl<'a> SingleFrame<'a> {
-	pub fn queue(&mut self, command: impl Command) -> R {
-		self.view.out.queue(command)?;
-		Ok(())
-	}
-	
-	pub fn flush(&mut self) -> R {
-		self.view.out.flush()
-	}
-	
 	fn render(&mut self) -> R {
 		if let Some(middle_node) = self.state.get_selected_node().or_else(|| self.state.tree.get(self.state.tree.root_id)) {
 			self.render_tree(middle_node)?;
-			self.flush()?;
+			self.view.flush()?;
 		}
 		
 		Ok(())
@@ -77,8 +77,8 @@ impl<'a> SingleFrame<'a> {
 		
 		for y in displayed_rows.len()..self.rows {
 			if let Ok(row_index) = u16::try_from(y) {
-				self.queue(MoveTo(0, row_index))?;
-				self.queue(Clear(ClearType::UntilNewLine))?;
+				self.view.queue(MoveTo(0, row_index))?;
+				self.view.queue(Clear(ClearType::UntilNewLine))?;
 			} else {
 				break;
 			}
@@ -128,26 +128,26 @@ impl<'a> SingleFrame<'a> {
 	}
 	
 	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, name_column_width: usize, is_selected: bool) -> R {
-		self.queue(MoveTo(0, row))?;
+		self.view.queue(MoveTo(0, row))?;
 		
-		components::file_name::print(self, entry.name(), level, name_column_width, is_selected)?;
-		
-		self.print_column_separator()?;
-		
-		components::date_time::print(self, entry.modified_time())?;
+		components::file_name::print(self.view, entry.name(), level, name_column_width, is_selected)?;
 		
 		self.print_column_separator()?;
 		
-		components::file_permissions::print(self, entry.kind(), entry.mode())?;
+		components::date_time::print(self.view, entry.modified_time())?;
 		
-		self.queue(ResetColor)?;
-		self.queue(Clear(ClearType::UntilNewLine))?;
+		self.print_column_separator()?;
+		
+		components::file_permissions::print(self.view, entry.kind(), entry.mode())?;
+		
+		self.view.queue(ResetColor)?;
+		self.view.queue(Clear(ClearType::UntilNewLine))?;
 		Ok(())
 	}
 	
 	fn print_column_separator(&mut self) -> R {
-		self.queue(ResetColor)?;
-		self.queue(Print("  "))
+		self.view.queue(ResetColor)?;
+		self.view.queue(Print("  "))
 	}
 }
 

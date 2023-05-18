@@ -3,7 +3,7 @@ use std::time::SystemTime;
 use chrono::{Datelike, DateTime, Local, Timelike, Utc};
 use crossterm::style::{Print, ResetColor};
 
-use crate::gui::view::{R, SingleFrame};
+use crate::gui::view::{R, View};
 
 // Month + Space + Day + Space + Hour + Colon + Minute
 pub const COLUMN_WIDTH: usize = 3 + 1 + 2 + 1 + 2 + 1 + 2;
@@ -18,62 +18,62 @@ const MONTHS: &[&str] = &[
 	"Oct", "Nov", "Dec",
 ];
 
-pub fn print(frame: &mut SingleFrame, system_time: Option<&SystemTime>) -> R {
-	frame.queue(ResetColor)?;
+pub fn print(view: &mut View, system_time: Option<&SystemTime>) -> R {
+	view.queue(ResetColor)?;
 	
 	if let Some(system_time) = system_time {
 		let date_time = DateTime::<Utc>::from(*system_time).naive_local();
 		
-		print_month(frame, date_time.month0() as usize)?;
-		frame.queue(Print(" "))?;
+		print_month(view, date_time.month0() as usize)?;
+		view.queue(Print(" "))?;
 		
-		print_day_padded(frame, date_time.day())?;
-		frame.queue(Print(" "))?;
+		print_day_padded(view, date_time.day())?;
+		view.queue(Print(" "))?;
 		
 		let year = date_time.year();
 		if year == Local::now().year() { // TODO cache
-			print_hour_minute_padded(frame, date_time.hour())?;
-			frame.queue(Print(":"))?;
-			print_hour_minute_padded(frame, date_time.minute())?;
+			print_hour_minute_padded(view, date_time.hour())?;
+			view.queue(Print(":"))?;
+			print_hour_minute_padded(view, date_time.minute())?;
 		} else {
-			print_year_padded(frame, year)?;
+			print_year_padded(view, year)?;
 		}
 	} else {
-		frame.queue(Print("??? ?? ??:??"))?;
+		view.queue(Print("??? ?? ??:??"))?;
 	}
 	
 	Ok(())
 }
 
-fn print_year_padded(frame: &mut SingleFrame, year: i32) -> R {
-	frame.queue(Print(year))?;
+fn print_year_padded(view: &mut View, year: i32) -> R {
+	view.queue(Print(year))?;
 	
 	let year_digits = integer_len(year);
 	if year_digits < YEAR_PADDED_WIDTH {
-		frame.queue(Print(" ".repeat(YEAR_PADDED_WIDTH - year_digits)))?;
+		view.queue(Print(" ".repeat(YEAR_PADDED_WIDTH - year_digits)))?;
 	}
 	
 	Ok(())
 }
 
-fn print_month(frame: &mut SingleFrame, month_index: usize) -> R {
-	frame.queue(Print(MONTHS.get(month_index).unwrap_or(&"???")))
+fn print_month(view: &mut View, month_index: usize) -> R {
+	view.queue(Print(MONTHS.get(month_index).unwrap_or(&"???")))
 }
 
-fn print_day_padded(frame: &mut SingleFrame, day: u32) -> R {
+fn print_day_padded(view: &mut View, day: u32) -> R {
 	if day < 10 {
-		frame.queue(Print(" "))?;
+		view.queue(Print(" "))?;
 	}
 	
-	frame.queue(Print(day))
+	view.queue(Print(day))
 }
 
-fn print_hour_minute_padded(frame: &mut SingleFrame, value: u32) -> R {
+fn print_hour_minute_padded(view: &mut View, value: u32) -> R {
 	if value < 10 {
-		frame.queue(Print("0"))?;
+		view.queue(Print("0"))?;
 	}
 	
-	frame.queue(Print(value))
+	view.queue(Print(value))
 }
 
 fn integer_len(n: i32) -> usize {
