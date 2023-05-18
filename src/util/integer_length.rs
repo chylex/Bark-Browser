@@ -4,7 +4,7 @@ pub trait IntegerLength {
 
 impl IntegerLength for u32 {
 	fn int_len(self) -> usize {
-		(self.checked_ilog10().unwrap_or(1) + 1) as usize
+		(self.checked_ilog10().unwrap_or(0) + 1) as usize
 	}
 }
 
