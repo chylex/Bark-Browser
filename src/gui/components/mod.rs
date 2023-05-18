@@ -7,6 +7,7 @@
 //! Printing functions must only affect the rest of the current line or lines below the cursor's initial position, and must leave the cursor
 //! after the end of printed content that is intended to remain. Anything past the final cursor position will be overwritten.
 
+mod column;
 pub mod date_time;
 pub mod file_name;
 pub mod file_permissions;
