@@ -3,8 +3,9 @@ use std::io;
 
 use crossterm::event::{Event, KeyCode, KeyEventKind, KeyModifiers};
 
-use crate::gui::action::{Action, ActionResult, ExpandCollapse, Quit};
-use crate::gui::action::movement::{MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp};
+use crate::state::action::{Action, ActionResult, Quit};
+use crate::state::action::movement::{MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp};
+use crate::state::action::tree::ExpandCollapse;
 use crate::state::State;
 
 pub struct ActionMap {

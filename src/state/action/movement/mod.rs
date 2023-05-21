@@ -1,7 +1,7 @@
 use slab_tree::{NodeId, NodeRef};
 
-use crate::gui::action::{Action, ActionResult};
 use crate::state::{FileSystemTree, Node, State};
+use crate::state::action::{Action, ActionResult};
 
 pub use self::parents::MoveOrTraverseUpParent;
 pub use self::parents::MoveToParent;

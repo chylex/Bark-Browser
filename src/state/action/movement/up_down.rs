@@ -1,7 +1,7 @@
 use slab_tree::{NodeId, NodeRef};
 
-use crate::gui::action::movement::MovementAction;
 use crate::state::{FileSystemTree, Node};
+use crate::state::action::movement::MovementAction;
 
 pub struct MoveDown;
 

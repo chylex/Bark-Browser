@@ -6,6 +6,7 @@ pub use self::tree::FileSystemTree;
 pub use self::tree::Node;
 
 mod tree;
+pub mod action;
 
 pub struct State {
 	pub tree: FileSystemTree,

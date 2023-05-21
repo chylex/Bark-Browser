@@ -1,4 +1,4 @@
-use crate::gui::action::{Action, ActionResult};
+use crate::state::action::{Action, ActionResult};
 use crate::state::State;
 
 pub struct ExpandCollapse;

@@ -7,9 +7,9 @@ use std::process::ExitCode;
 use crossterm::{cursor, QueueableCommand, terminal};
 
 use crate::file::FileOwnerNameCache;
-use crate::gui::action::ActionResult;
 use crate::gui::ActionMap;
 use crate::gui::view::View;
+use crate::state::action::ActionResult;
 use crate::state::State;
 
 mod file;
