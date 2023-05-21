@@ -13,10 +13,6 @@ impl FileSystemTree {
 			
 			if let Some(mut new_root) = self.inner.root_mut() {
 				expand_new_root(&mut new_root);
-				
-				for x in new_root.as_ref().traverse_pre_order() {
-					println!("{:?}", x.data().entry.path());
-				}
 			}
 			
 			Some(self.root_id)
