@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::io;
 use std::io::{stdout, Stdout, Write};
 
@@ -16,11 +16,15 @@ pub type R = io::Result<()>;
 
 pub struct View {
 	out: Stdout,
+	column_width_cache: Option<ColumnWidths>,
 }
 
 impl View {
 	pub fn stdout() -> Self {
-		Self { out: stdout() }
+		Self {
+			out: stdout(),
+			column_width_cache: None,
+		}
 	}
 	
 	pub fn queue(&mut self, command: impl Command) -> R {
@@ -32,23 +36,51 @@ impl View {
 		self.out.flush()
 	}
 	
+	pub fn tree_structure_changed(&mut self) {
+		self.column_width_cache.take();
+	}
+	
 	pub fn render_state(&mut self, state: &State, file_owner_name_cache: &mut FileOwnerNameCache) -> R {
 		let terminal_size = terminal::size()?;
+		let cols = terminal_size.0 as usize;
+		let rows = terminal_size.1 as usize;
 		
-		SingleFrame {
-			view: self,
-			cols: terminal_size.0 as usize,
-			rows: terminal_size.1 as usize,
-			file_owner_name_cache,
-			state,
-		}.render()
+		let column_widths = self.get_column_widths_for_frame(state, file_owner_name_cache, cols);
+		
+		SingleFrame { view: self, rows, column_widths, file_owner_name_cache, state }.render()
+	}
+	
+	fn get_column_widths_for_frame(&mut self, state: &State, file_owner_name_cache: &mut FileOwnerNameCache, cols: usize) -> ColumnWidths {
+		let mut column_widths = *self.get_or_update_cached_column_widths(state, file_owner_name_cache);
+		
+		let owner_column_width = column_widths.user + 1 + column_widths.group;
+		let max_name_width = cols.saturating_sub(2 + components::file_size::COLUMN_WIDTH + 2 + components::date_time::COLUMN_WIDTH + 2 + owner_column_width + 2 + components::file_permissions::COLUMN_WIDTH);
+		
+		column_widths.name = min(column_widths.name, max_name_width);
+		column_widths
+	}
+	
+	fn get_or_update_cached_column_widths(&mut self, state: &State, file_owner_name_cache: &mut FileOwnerNameCache) -> &ColumnWidths {
+		self.column_width_cache.get_or_insert_with(|| {
+			let mut result = ColumnWidths::default();
+			
+			for node in state.tree.into_iter() {
+				let entry = &node.data().entry;
+				
+				result.name = max(result.name, get_node_level(&node) + entry.name().len());
+				result.user = max(result.user, file_owner_name_cache.get_user(entry.uid()).len());
+				result.group = max(result.group, file_owner_name_cache.get_group(entry.gid()).len());
+			}
+			
+			result
+		})
 	}
 }
 
 struct SingleFrame<'a> {
 	view: &'a mut View,
-	cols: usize,
 	rows: usize,
+	column_widths: ColumnWidths,
 	file_owner_name_cache: &'a mut FileOwnerNameCache,
 	state: &'a State,
 }
@@ -65,11 +97,10 @@ impl<'a> SingleFrame<'a> {
 	
 	fn render_tree(&mut self, middle_node: NodeRef<Node>) -> R {
 		let displayed_rows = self.collect_displayed_rows(self.rows, middle_node);
-		let column_widths = self.calculate_column_widths(&displayed_rows);
 		
 		for (index, row) in displayed_rows.iter().enumerate() {
 			if let Ok(row_index) = u16::try_from(index) {
-				self.render_node(row_index, row.level, row.entry, &column_widths, row.node_id == self.state.selected_id)?;
+				self.render_node(row_index, row.level, row.entry, row.node_id == self.state.selected_id)?;
 			} else {
 				break;
 			}
@@ -115,16 +146,6 @@ impl<'a> SingleFrame<'a> {
 		displayed_rows
 	}
 	
-	fn calculate_column_widths(&mut self, displayed_rows: &[NodeRow]) -> ColumnWidths {
-		let name = displayed_rows.iter().map(|row| row.level + row.entry.name().len()).max().unwrap_or(0);
-		let user = displayed_rows.iter().map(|row| self.file_owner_name_cache.get_user(row.entry.uid()).len()).max().unwrap_or(0);
-		let group = displayed_rows.iter().map(|row| self.file_owner_name_cache.get_group(row.entry.gid()).len()).max().unwrap_or(0);
-		
-		let name = min(name, self.cols.saturating_sub(2 + components::file_size::COLUMN_WIDTH + 2 + components::date_time::COLUMN_WIDTH + 2 + user + 1 + group + 2 + components::file_permissions::COLUMN_WIDTH));
-		
-		ColumnWidths { name, user, group }
-	}
-	
 	fn move_cursor<F>(&self, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, Node>> where F: FnOnce(&FileSystemTree, &NodeRef<Node>) -> Option<NodeId> {
 		let tree = &self.state.tree;
 		let next_node = cursor
@@ -137,10 +158,10 @@ impl<'a> SingleFrame<'a> {
 		next_node
 	}
 	
-	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, column_widths: &ColumnWidths, is_selected: bool) -> R {
+	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, is_selected: bool) -> R {
 		self.view.queue(MoveTo(0, row))?;
 		
-		components::file_name::print(self.view, entry, level, column_widths.name, is_selected)?;
+		components::file_name::print(self.view, entry, level, self.column_widths.name, is_selected)?;
 		
 		self.print_column_separator()?;
 		
@@ -152,9 +173,9 @@ impl<'a> SingleFrame<'a> {
 		
 		self.print_column_separator()?;
 		
-		components::file_owner::print(self.view, self.file_owner_name_cache.get_user(entry.uid()), column_widths.user)?;
+		components::file_owner::print(self.view, self.file_owner_name_cache.get_user(entry.uid()), self.column_widths.user)?;
 		self.view.queue(Print(" "))?;
-		components::file_owner::print(self.view, self.file_owner_name_cache.get_group(entry.gid()), column_widths.group)?;
+		components::file_owner::print(self.view, self.file_owner_name_cache.get_group(entry.gid()), self.column_widths.group)?;
 		
 		self.print_column_separator()?;
 		
@@ -179,13 +200,18 @@ struct NodeRow<'a> {
 impl<'a> From<&NodeRef<'a, Node>> for NodeRow<'a> {
 	fn from(node: &NodeRef<'a, Node>) -> Self {
 		return Self {
-			level: node.ancestors().count(),
+			level: get_node_level(node),
 			node_id: node.node_id(),
 			entry: &node.data().entry,
 		};
 	}
 }
 
+fn get_node_level(node: &NodeRef<Node>) -> usize {
+	node.ancestors().count()
+}
+
+#[derive(Copy, Clone, Default)]
 struct ColumnWidths {
 	name: usize,
 	user: usize,

@@ -21,7 +21,7 @@ impl FileSystemTree {
 	}
 	
 	pub fn expand_or_collapse(&mut self, node_id: NodeId) -> bool {
-		return if let Some(mut node) = self.get_mut(node_id) {
+		if let Some(mut node) = self.get_mut(node_id) {
 			if node.data().is_expanded {
 				collapse_node(&mut node)
 			} else {
@@ -29,7 +29,7 @@ impl FileSystemTree {
 			}
 		} else {
 			false
-		};
+		}
 	}
 }
 

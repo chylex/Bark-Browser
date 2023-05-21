@@ -46,12 +46,20 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	'render: loop {
 		view.render_state(&state, &mut file_owner_name_cache)?;
 		
-		loop {
+		'action: loop {
 			match actions.handle_next_action(&mut state)? {
-				ActionResult::Nothing => {}
-				ActionResult::Redraw => {
+				ActionResult::Nothing => {
+					continue 'action;
+				}
+				
+				ActionResult::Redraw { tree_structure_changed } => {
+					if tree_structure_changed {
+						view.tree_structure_changed();
+					}
+					
 					continue 'render;
 				}
+				
 				ActionResult::Quit => {
 					break 'render;
 				}

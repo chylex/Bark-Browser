@@ -18,7 +18,7 @@ impl Action for MoveOrTraverseUpParent {
 	fn perform(&self, state: &mut State) -> ActionResult {
 		if let Some(new_selected_id) = state.get_selected_node().and_then(|node| MoveToParent::get_target(&state.tree, &node)).or_else(|| state.tree.traverse_up_root()) {
 			state.selected_id = new_selected_id;
-			return ActionResult::Redraw;
+			return ActionResult::redraw();
 		}
 		
 		ActionResult::Nothing

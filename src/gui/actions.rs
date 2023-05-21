@@ -55,7 +55,7 @@ impl ActionMap {
 				return Ok(action.perform(state));
 			}
 		} else if let Event::Resize(_, _) = event {
-			return Ok(ActionResult::Redraw);
+			return Ok(ActionResult::redraw());
 		}
 		
 		Ok(ActionResult::Nothing)

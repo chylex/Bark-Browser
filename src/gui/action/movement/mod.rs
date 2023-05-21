@@ -22,7 +22,7 @@ impl<T: MovementAction> Action for T {
 	fn perform(&self, state: &mut State) -> ActionResult {
 		return if let Some(next) = state.get_selected_node().and_then(|node| Self::get_target(&state.tree, &node)) {
 			state.selected_id = next;
-			ActionResult::Redraw
+			ActionResult::redraw()
 		} else {
 			ActionResult::Nothing
 		};

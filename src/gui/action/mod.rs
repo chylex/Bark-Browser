@@ -13,6 +13,12 @@ pub trait Action {
 
 pub enum ActionResult {
 	Nothing,
-	Redraw,
+	Redraw { tree_structure_changed: bool },
 	Quit,
+}
+
+impl ActionResult {
+	pub fn redraw() -> Self {
+		Self::Redraw { tree_structure_changed: false }
+	}
 }

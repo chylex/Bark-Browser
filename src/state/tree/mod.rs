@@ -2,6 +2,7 @@ use std::fs::ReadDir;
 use std::path::Path;
 
 use slab_tree::{NodeId, NodeMut, NodeRef, Tree};
+use slab_tree::iter::PreOrder;
 
 use crate::file::FileEntry;
 
@@ -28,6 +29,29 @@ impl FileSystemTree {
 	
 	pub fn get_mut(&mut self, node_id: NodeId) -> Option<NodeMut<Node>> {
 		self.inner.get_mut(node_id)
+	}
+}
+
+impl<'a> IntoIterator for &'a FileSystemTree {
+	type Item = NodeRef<'a, Node>;
+	type IntoIter = FileSystemTreeIterator<'a>;
+	
+	fn into_iter(self) -> Self::IntoIter {
+		FileSystemTreeIterator {
+			iter: self.inner.root().map(|root| root.traverse_pre_order())
+		}
+	}
+}
+
+pub struct FileSystemTreeIterator<'a> {
+	iter: Option<PreOrder<'a, Node>>
+}
+
+impl<'a> Iterator for FileSystemTreeIterator<'a> {
+	type Item = NodeRef<'a, Node>;
+	
+	fn next(&mut self) -> Option<Self::Item> {
+		self.iter.as_mut().and_then(PreOrder::next)
 	}
 }
 
