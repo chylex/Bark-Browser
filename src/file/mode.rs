@@ -19,6 +19,10 @@ impl FileMode {
 		self.get_class(0)
 	}
 	
+	pub fn is_executable_by_any(&self) -> Option<bool> {
+		self.get_bits(0, 0b_001_001_001).map(|b| b != 0)
+	}
+	
 	pub fn is_setuid(&self) -> Option<bool> {
 		self.get_bit(11)
 	}

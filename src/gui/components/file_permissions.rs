@@ -36,7 +36,7 @@ pub fn print(view: &mut View, kind: &FileKind, mode: &FileMode) -> R {
 
 fn print_kind(view: &mut View, kind: &FileKind) -> R {
 	let c = match kind {
-		FileKind::File { size: _ } => { '-' }
+		FileKind::File { .. } => { '-' }
 		FileKind::Directory => { 'd' }
 		FileKind::Symlink => { 'l' }
 		FileKind::BlockDevice => { 'b' }

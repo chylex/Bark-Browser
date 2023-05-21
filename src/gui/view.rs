@@ -140,7 +140,7 @@ impl<'a> SingleFrame<'a> {
 	fn render_node(&mut self, row: u16, level: usize, entry: &FileEntry, column_widths: &ColumnWidths, is_selected: bool) -> R {
 		self.view.queue(MoveTo(0, row))?;
 		
-		components::file_name::print(self.view, entry.name(), level, column_widths.name, is_selected)?;
+		components::file_name::print(self.view, entry, level, column_widths.name, is_selected)?;
 		
 		self.print_column_separator()?;
 		
