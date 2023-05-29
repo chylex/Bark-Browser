@@ -3,6 +3,8 @@ use std::fs::{DirEntry, Metadata};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
+use lazy_static::lazy_static;
+
 pub use crate::file::kind::FileKind;
 pub use crate::file::mode::{FileMode, Permission, PermissionClassMode};
 pub use crate::file::name::FileName;
@@ -20,6 +22,10 @@ pub struct FileEntry {
 	mode: FileMode,
 	owner: Option<FileOwner>,
 	mtime: Option<SystemTime>,
+}
+
+lazy_static! {
+	static ref DUMMY: FileEntry = FileEntry::dummy();
 }
 
 impl FileEntry {
@@ -43,6 +49,10 @@ impl FileEntry {
 			owner: None,
 			mtime: None,
 		}
+	}
+	
+	pub fn dummy_as_ref() -> &'static Self {
+		&DUMMY
 	}
 	
 	pub fn path(&self) -> Option<&Path> {

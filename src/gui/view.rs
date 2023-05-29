@@ -10,7 +10,8 @@ use slab_tree::{NodeId, NodeRef};
 
 use crate::file::{FileEntry, FileKind, FileOwnerNameCache};
 use crate::gui::components;
-use crate::state::{FileSystemTree, Node, State};
+use crate::state::filesystem::{FsTree, FsTreeView, FsTreeViewNode};
+use crate::state::State;
 
 pub type R = io::Result<()>;
 
@@ -64,8 +65,8 @@ impl View {
 		self.column_width_cache.get_or_insert_with(|| {
 			let mut result = ColumnWidths::default();
 			
-			for node in state.tree.into_iter() {
-				let entry = &node.data().entry;
+			for node in state.tree.view.into_iter() {
+				let entry = state.tree.get_entry(&node).unwrap_or_else(|| FileEntry::dummy_as_ref());
 				
 				result.name = max(result.name, get_node_level(&node) + entry.name().len());
 				result.user = max(result.user, file_owner_name_cache.get_user(entry.uid()).len());
@@ -87,7 +88,7 @@ struct SingleFrame<'a> {
 
 impl<'a> SingleFrame<'a> {
 	fn render(&mut self) -> R {
-		if let Some(middle_node) = self.state.get_selected_node().or_else(|| self.state.tree.get(self.state.tree.root_id)) {
+		if let Some(middle_node) = self.state.selected_node().or_else(|| self.state.tree.view.root()) {
 			self.render_tree(middle_node)?;
 			self.view.flush()?;
 		}
@@ -95,12 +96,12 @@ impl<'a> SingleFrame<'a> {
 		Ok(())
 	}
 	
-	fn render_tree(&mut self, middle_node: NodeRef<Node>) -> R {
+	fn render_tree(&mut self, middle_node: NodeRef<FsTreeViewNode>) -> R {
 		let displayed_rows = self.collect_displayed_rows(self.rows, middle_node);
 		
 		for (index, row) in displayed_rows.iter().enumerate() {
 			if let Ok(row_index) = u16::try_from(index) {
-				self.render_node(row_index, row.level, row.entry, row.node_id == self.state.selected_id)?;
+				self.render_node(row_index, row.level, row.entry, row.view_node_id == self.state.selected_view_node_id)?;
 			} else {
 				break;
 			}
@@ -118,24 +119,24 @@ impl<'a> SingleFrame<'a> {
 		Ok(())
 	}
 	
-	fn collect_displayed_rows(&self, terminal_rows: usize, middle_node: NodeRef<'a, Node>) -> Vec<NodeRow<'a>> {
+	fn collect_displayed_rows(&self, terminal_rows: usize, middle_node: NodeRef<'a, FsTreeViewNode>) -> Vec<NodeRow<'a>> {
 		let mut displayed_rows = Vec::with_capacity(terminal_rows);
-		displayed_rows.push(NodeRow::from(&middle_node));
+		displayed_rows.push(NodeRow::from(&middle_node, &self.state.tree));
 		
 		let mut cursor_up_id = Some(middle_node.node_id());
 		let mut cursor_down_id = Some(middle_node.node_id());
 		
 		while displayed_rows.len() < terminal_rows {
-			if let Some(next_node_up) = self.move_cursor(&mut cursor_up_id, FileSystemTree::get_node_above) {
-				displayed_rows.insert(0, NodeRow::from(&next_node_up));
+			if let Some(next_node_up) = self.move_cursor(&mut cursor_up_id, FsTreeView::get_node_above) {
+				displayed_rows.insert(0, NodeRow::from(&next_node_up, &self.state.tree));
 			}
 			
 			if displayed_rows.len() >= terminal_rows {
 				break;
 			}
 			
-			if let Some(next_node_down) = self.move_cursor(&mut cursor_down_id, FileSystemTree::get_node_below) {
-				displayed_rows.push(NodeRow::from(&next_node_down));
+			if let Some(next_node_down) = self.move_cursor(&mut cursor_down_id, FsTreeView::get_node_below) {
+				displayed_rows.push(NodeRow::from(&next_node_down, &self.state.tree));
 			}
 			
 			if cursor_up_id.is_none() && cursor_down_id.is_none() {
@@ -146,12 +147,12 @@ impl<'a> SingleFrame<'a> {
 		displayed_rows
 	}
 	
-	fn move_cursor<F>(&self, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, Node>> where F: FnOnce(&FileSystemTree, &NodeRef<Node>) -> Option<NodeId> {
-		let tree = &self.state.tree;
+	fn move_cursor<F>(&self, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, FsTreeViewNode>> where F: FnOnce(&FsTreeView, &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
+		let view = &self.state.tree.view;
 		let next_node = cursor
-			.and_then(|id| tree.get(id))
-			.and_then(|node| func(tree, &node))
-			.and_then(|id| tree.get(id));
+			.and_then(|id| view.get(id))
+			.and_then(|node| func(view, &node))
+			.and_then(|id| view.get(id));
 		
 		*cursor = next_node.as_ref().map(NodeRef::node_id);
 		
@@ -192,22 +193,22 @@ impl<'a> SingleFrame<'a> {
 }
 
 struct NodeRow<'a> {
+	view_node_id: NodeId,
 	level: usize,
-	node_id: NodeId,
 	entry: &'a FileEntry,
 }
 
-impl<'a> From<&NodeRef<'a, Node>> for NodeRow<'a> {
-	fn from(node: &NodeRef<'a, Node>) -> Self {
+impl<'a> NodeRow<'a> {
+	fn from(view_node: &NodeRef<'a, FsTreeViewNode>, tree: &'a FsTree) -> Self {
 		return Self {
-			level: get_node_level(node),
-			node_id: node.node_id(),
-			entry: &node.data().entry,
+			view_node_id: view_node.node_id(),
+			level: get_node_level(view_node),
+			entry: tree.get_entry(view_node).unwrap_or_else(|| FileEntry::dummy_as_ref()),
 		};
 	}
 }
 
-fn get_node_level(node: &NodeRef<Node>) -> usize {
+fn get_node_level<T>(node: &NodeRef<T>) -> usize {
 	node.ancestors().count()
 }
 

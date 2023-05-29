@@ -39,7 +39,7 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	let actions = ActionMap::new();
 	
 	let mut state = State::with_root_path(&path.unwrap());
-	state.tree.expand(state.tree.root_id);
+	state.tree.expand(state.tree.view.root_id());
 	
 	let mut file_owner_name_cache = FileOwnerNameCache::new();
 	

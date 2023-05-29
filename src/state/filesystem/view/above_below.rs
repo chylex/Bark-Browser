@@ -1,9 +1,17 @@
 use slab_tree::{NodeId, NodeRef};
 
-use crate::state::{FileSystemTree, Node};
+use crate::state::filesystem::{FsTreeView, FsTreeViewNode};
 
-impl FileSystemTree {
-	pub fn get_node_below(&self, node: &NodeRef<Node>) -> Option<NodeId> {
+impl FsTreeView {
+	pub fn get_node_above(&self, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
+		if let Some(prev_sibling) = selected_node.prev_sibling() {
+			Some(self.get_last_descendant_or_self(prev_sibling.node_id()))
+		} else {
+			selected_node.parent().map(|parent| parent.node_id())
+		}
+	}
+	
+	pub fn get_node_below(&self, node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
 		if let Some(next) = node.first_child() {
 			Some(next.node_id())
 		} else if let Some(next) = node.next_sibling() {
@@ -15,14 +23,6 @@ impl FileSystemTree {
 				}
 			}
 			None
-		}
-	}
-	
-	pub fn get_node_above(&self, selected_node: &NodeRef<Node>) -> Option<NodeId> {
-		if let Some(prev_sibling) = selected_node.prev_sibling() {
-			Some(self.get_last_descendant_or_self(prev_sibling.node_id()))
-		} else {
-			selected_node.parent().map(|parent| parent.node_id())
 		}
 	}
 	

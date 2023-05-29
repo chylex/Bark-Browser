@@ -1,7 +1,8 @@
 use slab_tree::{NodeId, NodeRef};
 
-use crate::state::{FileSystemTree, Node, State};
 use crate::state::action::{Action, ActionResult};
+use crate::state::filesystem::{FsTreeView, FsTreeViewNode};
+use crate::state::State;
 
 pub use self::parents::MoveOrTraverseUpParent;
 pub use self::parents::MoveToParent;
@@ -15,13 +16,13 @@ mod siblings;
 mod up_down;
 
 pub trait MovementAction {
-	fn get_target(tree: &FileSystemTree, selected_node: &NodeRef<Node>) -> Option<NodeId> where Self: Sized;
+	fn get_target(tree: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized;
 }
 
 impl<T: MovementAction> Action for T {
 	fn perform(&self, state: &mut State) -> ActionResult {
-		return if let Some(next) = state.get_selected_node().and_then(|node| Self::get_target(&state.tree, &node)) {
-			state.selected_id = next;
+		return if let Some(next) = state.selected_node().and_then(|node| Self::get_target(&state.tree.view, &node)) {
+			state.selected_view_node_id = next;
 			ActionResult::redraw()
 		} else {
 			ActionResult::Nothing
