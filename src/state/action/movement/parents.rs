@@ -17,9 +17,14 @@ pub struct MoveOrTraverseUpParent;
 
 impl Action for MoveOrTraverseUpParent {
 	fn perform(&self, state: &mut State) -> ActionResult {
-		if let Some(new_selected_id) = state.selected_node().and_then(|node| MoveToParent::get_target(&state.tree.view, &node)).or_else(|| state.tree.traverse_up_root()) {
-			state.selected_view_node_id = new_selected_id;
-			return ActionResult::redraw();
+		if let Some(selected_node) = state.selected_node() {
+			if let Some(new_selected_id) = MoveToParent::get_target(&state.tree.view, &selected_node) {
+				state.selected_view_node_id = new_selected_id;
+				return ActionResult::redraw();
+			} else if let Some(new_seelected_id) = state.tree.traverse_up_root() {
+				state.selected_view_node_id = new_seelected_id;
+				return ActionResult::Redraw { tree_structure_changed: true };
+			}
 		}
 		
 		ActionResult::Nothing
