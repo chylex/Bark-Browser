@@ -5,15 +5,14 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use crossterm::{cursor, QueueableCommand, terminal};
+use crossterm::event::{Event, KeyEventKind};
 
-use crate::file::FileOwnerNameCache;
-use crate::gui::ActionMap;
-use crate::gui::view::View;
-use crate::state::action::ActionResult;
+use crate::state::action::{ActionResult, KeyBinding};
 use crate::state::State;
+use crate::state::view::View;
 
+mod component;
 mod file;
-mod gui;
 mod state;
 mod util;
 
@@ -36,32 +35,32 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	stdout().flush()?;
 	
 	let mut view = View::stdout();
-	let actions = ActionMap::new();
-	
 	let mut state = State::with_root_path(&path.unwrap());
-	state.tree.expand(state.tree.view.root_id());
-	
-	let mut file_owner_name_cache = FileOwnerNameCache::new();
 	
 	'render: loop {
-		view.render_state(&state, &mut file_owner_name_cache)?;
+		state.render(&mut view)?;
 		
-		'action: loop {
-			match actions.handle_next_action(&mut state)? {
+		'event: loop {
+			match handle_event(&mut state, crossterm::event::read()?) {
 				ActionResult::Nothing => {
-					continue 'action;
+					continue 'event;
 				}
 				
-				ActionResult::Redraw { tree_structure_changed } => {
-					if tree_structure_changed {
-						view.tree_structure_changed();
-					}
-					
+				ActionResult::Redraw => {
 					continue 'render;
 				}
 				
-				ActionResult::Quit => {
-					break 'render;
+				ActionResult::PushLayer(layer) => {
+					state.push_layer(layer);
+					continue 'render;
+				}
+				
+				ActionResult::PopLayer => {
+					if state.pop_layer() {
+						break 'render;
+					} else {
+						continue 'render;
+					}
 				}
 			}
 		}
@@ -73,4 +72,18 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	terminal::disable_raw_mode()?;
 	
 	Ok(ExitCode::SUCCESS)
+}
+
+fn handle_event(state: &mut State, event: Event) -> ActionResult {
+	if let Event::Key(key) = event {
+		if key.kind == KeyEventKind::Release {
+			ActionResult::Nothing
+		} else {
+			state.handle_input(KeyBinding::from(key))
+		}
+	} else if let Event::Resize(_, _) = event {
+		ActionResult::Redraw
+	} else {
+		ActionResult::Nothing
+	}
 }

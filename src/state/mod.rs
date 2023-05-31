@@ -1,26 +1,43 @@
 use std::path::Path;
 
-use slab_tree::{NodeId, NodeRef};
-
-use crate::state::filesystem::{FsTree, FsTreeViewNode};
+use crate::component::filesystem::FsLayer;
+use crate::state::action::{ActionResult, KeyBinding};
+use crate::state::layer::Layer;
+use crate::state::view::{R, View};
 
 pub mod action;
-pub mod filesystem;
+pub mod layer;
+pub mod view;
 
 pub struct State {
-	pub tree: FsTree,
-	pub selected_view_node_id: NodeId,
+	pub layers: Vec<Box<dyn Layer>>,
 }
 
 impl State {
 	pub fn with_root_path(root_path: &Path) -> Self {
-		let tree = FsTree::with_root_path(root_path);
-		let selected_view_node_id = tree.view.root_id();
-		
-		Self { tree, selected_view_node_id }
+		Self {
+			layers: vec![Box::new(FsLayer::with_root_path(root_path))]
+		}
 	}
 	
-	pub fn selected_node(&self) -> Option<NodeRef<FsTreeViewNode>> {
-		return self.tree.view.get(self.selected_view_node_id);
+	pub fn handle_input(&mut self, key_binding: KeyBinding) -> ActionResult {
+		self.layers.last_mut().map(|layer| layer.handle_input(key_binding)).unwrap_or(ActionResult::Nothing)
+	}
+	
+	pub fn render(&mut self, view: &mut View) -> R {
+		for layer in self.layers.iter_mut() {
+			layer.render(view)?;
+		}
+		
+		view.flush()
+	}
+	
+	pub fn push_layer(&mut self, layer: Box<dyn Layer>) {
+		self.layers.push(layer);
+	}
+	
+	pub fn pop_layer(&mut self) -> bool {
+		self.layers.pop();
+		self.layers.is_empty()
 	}
 }
