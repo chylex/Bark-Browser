@@ -1,26 +1,22 @@
-use crossterm::style::{Print, ResetColor};
+use ratatui::buffer::Buffer;
+use ratatui::style::Style;
 
-use crate::state::view::{R, View};
 use crate::util::int_len;
 
-const VALUE_WIDTH: usize = 3;
-pub const COLUMN_WIDTH: usize = VALUE_WIDTH + 1 + 2;
+const VALUE_MAX_WIDTH: u16 = 3;
+pub const COLUMN_WIDTH: u16 = VALUE_MAX_WIDTH + 1 + 2;
 
 const UNITS: &[&str] = &[
 	"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"
 ];
 
-pub fn print(view: &mut View, size: Option<u64>) -> R {
-	view.queue(ResetColor)?;
-	
+pub fn print(buf: &mut Buffer, x: u16, y: u16, size: Option<u64>) {
 	if let Some(size) = size {
-		print_size_with_unit(view, size)
-	} else {
-		view.queue(Print(" ".repeat(COLUMN_WIDTH)))
+		print_size_with_unit(buf, x, y, size)
 	}
 }
 
-fn print_size_with_unit(view: &mut View, size: u64) -> R {
+fn print_size_with_unit(buf: &mut Buffer, x: u16, y: u16, size: u64) {
 	let mut size = size;
 	let mut unit = 0;
 	
@@ -30,14 +26,9 @@ fn print_size_with_unit(view: &mut View, size: u64) -> R {
 	}
 	
 	let unit_symbol = UNITS[unit];
-	let actual_width = int_len(size) + 1 + unit_symbol.len();
-	if actual_width < COLUMN_WIDTH {
-		view.queue(Print(" ".repeat(COLUMN_WIDTH - actual_width)))?;
-	}
+	let symbol_width = unit_symbol.len();
+	let total_width = int_len(size) + 1 + symbol_width;
 	
-	view.queue(Print(size))?;
-	view.queue(Print(" "))?;
-	view.queue(Print(unit_symbol))?;
-	
-	Ok(())
+	buf.set_string(x + COLUMN_WIDTH - total_width as u16, y, size.to_string(), Style::default());
+	buf.set_string(x + COLUMN_WIDTH - symbol_width as u16, y, unit_symbol, Style::default());
 }

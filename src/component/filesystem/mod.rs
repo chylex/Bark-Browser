@@ -6,7 +6,7 @@ use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::FileOwnerNameCache;
 use crate::state::action::{ActionResult, KeyBinding};
 use crate::state::layer::Layer;
-use crate::state::view::{R, View};
+use crate::state::view::F;
 
 mod action;
 mod render;
@@ -48,14 +48,14 @@ impl Layer for FsLayer {
 		action::ACTION_MAP.handle_action(self, key_binding)
 	}
 	
-	fn render(&mut self, view: &mut View) -> R {
-		render::render(view, self)
+	fn render(&mut self, frame: &mut F) {
+		render::render(self, frame)
 	}
 }
 
 #[derive(Copy, Clone, Default)]
 struct ColumnWidths {
-	name: usize,
-	user: usize,
-	group: usize,
+	name: u16,
+	user: u16,
+	group: u16,
 }

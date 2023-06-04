@@ -3,14 +3,14 @@ use std::path::Path;
 use crate::component::filesystem::FsLayer;
 use crate::state::action::{ActionResult, KeyBinding};
 use crate::state::layer::Layer;
-use crate::state::view::{R, View};
+use crate::state::view::F;
 
 pub mod action;
 pub mod layer;
 pub mod view;
 
 pub struct State {
-	pub layers: Vec<Box<dyn Layer>>,
+	layers: Vec<Box<dyn Layer>>,
 }
 
 impl State {
@@ -24,12 +24,10 @@ impl State {
 		self.layers.last_mut().map(|layer| layer.handle_input(key_binding)).unwrap_or(ActionResult::Nothing)
 	}
 	
-	pub fn render(&mut self, view: &mut View) -> R {
+	pub fn render(&mut self, frame: &mut F) {
 		for layer in self.layers.iter_mut() {
-			layer.render(view)?;
+			layer.render(frame);
 		}
-		
-		view.flush()
 	}
 	
 	pub fn push_layer(&mut self, layer: Box<dyn Layer>) {

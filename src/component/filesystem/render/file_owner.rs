@@ -1,19 +1,18 @@
-use crossterm::style::{Color, Print, ResetColor, SetForegroundColor};
+use ratatui::buffer::Buffer;
+use ratatui::style::{Color, Style};
+use ratatui::text::Span;
 
 use crate::component::filesystem::render::column;
 use crate::file::FileOwnerName;
-use crate::state::view::{R, View};
 
-pub fn print(view: &mut View, name: &FileOwnerName, column_width: usize) -> R {
-	column::print_fixed_width_cell(view, |view| {
-		view.queue(ResetColor)?;
-		
-		match name {
-			FileOwnerName::Named(_) => {},
-			FileOwnerName::Numeric(_) => view.queue(SetForegroundColor(Color::AnsiValue(248 /* Grey66 */)))?,
-			FileOwnerName::Unknown => view.queue(SetForegroundColor(Color::DarkGrey))?,
-		}
-		
-		view.queue(Print(name))
-	}, column_width)
+pub fn print(buf: &mut Buffer, x: u16, y: u16, name: &FileOwnerName, column_width: u16) {
+	let style = match name {
+		FileOwnerName::Named(_)   => Style::default(),
+		FileOwnerName::Numeric(_) => Style::default().fg(Color::Indexed(248 /* Grey66 */)),
+		FileOwnerName::Unknown    => Style::default().fg(Color::DarkGray),
+	};
+	
+	column::print_fixed_width_cell(buf, x, y, column_width, vec![
+		Span::styled(name, style),
+	]);
 }

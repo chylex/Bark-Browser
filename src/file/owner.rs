@@ -1,5 +1,5 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 use std::fs::Metadata;
 
 use crate::util;
@@ -55,12 +55,12 @@ impl FileOwnerName {
 	}
 }
 
-impl Display for FileOwnerName {
-	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-		match self {
-			Self::Named(name) => write!(f, "{}", name),
-			Self::Numeric(id) => write!(f, "{}", id),
-			Self::Unknown => write!(f, "???"),
+impl<'a> From<&'a FileOwnerName> for Cow<'a, str> {
+	fn from(value: &'a FileOwnerName) -> Self {
+		match value {
+			FileOwnerName::Named(name) => name.into(),
+			FileOwnerName::Numeric(id) => id.to_string().into(),
+			FileOwnerName::Unknown => "???".into(),
 		}
 	}
 }

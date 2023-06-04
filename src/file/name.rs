@@ -1,8 +1,6 @@
 use std::ffi::OsString;
 use std::fmt::{Display, Formatter};
 
-use unicode_segmentation::UnicodeSegmentation;
-
 pub struct FileName {
 	os: Option<OsString>,
 	str: String,
@@ -15,10 +13,6 @@ impl FileName {
 	
 	pub fn str(&self) -> &str {
 		&self.str
-	}
-	
-	pub fn len(&self) -> usize {
-		self.str.graphemes(true).count()
 	}
 }
 

@@ -1,25 +1,38 @@
 use std::io;
-use std::io::{stdout, Stdout, Write};
+use std::io::{stdout, Stdout};
 
-use crossterm::{Command, QueueableCommand};
+use crossterm::{ExecutableCommand, terminal};
+use ratatui::{Frame, Terminal};
+use ratatui::backend::CrosstermBackend;
+use ratatui::terminal::CompletedFrame;
 
-pub type R = io::Result<()>;
+pub type F<'a> = Frame<'a, CrosstermBackend<Stdout>>;
 
 pub struct View {
-	out: Stdout,
+	term: Terminal<CrosstermBackend<Stdout>>,
 }
 
 impl View {
-	pub fn stdout() -> Self {
-		Self { out: stdout() }
+	pub fn stdout() -> io::Result<Self> {
+		terminal::enable_raw_mode()?;
+		
+		let mut term = Terminal::new(CrosstermBackend::new(stdout()))?;
+		
+		term.backend_mut().execute(terminal::EnterAlternateScreen)?;
+		term.hide_cursor()?;
+		term.clear()?;
+		
+		Ok(Self { term })
 	}
 	
-	pub fn queue(&mut self, command: impl Command) -> R {
-		self.out.queue(command)?;
-		Ok(())
+	pub fn close(mut self) -> io::Result<()> {
+		self.term.show_cursor()?;
+		self.term.backend_mut().execute(terminal::LeaveAlternateScreen)?;
+		
+		terminal::disable_raw_mode()
 	}
 	
-	pub fn flush(&mut self) -> R {
-		self.out.flush()
+	pub fn render<R>(&mut self, renderer: R) -> io::Result<CompletedFrame> where R: FnOnce(&mut F) {
+		self.term.draw(renderer)
 	}
 }

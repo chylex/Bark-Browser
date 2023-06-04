@@ -1,24 +1,15 @@
-//! Components should provide a function for either rendering or printing themselves.
-//!
-//! Both must set their desired foreground and background colors at the beginning, and should not restore them to the original values.
-//! 
-//! Rendering functions may affect any part of the terminal, and may leave the cursor in any position.
-//! 
-//! Printing functions must only affect the rest of the current line or lines below the cursor's initial position, and must leave the cursor
-//! after the end of printed content that is intended to remain. Anything past the final cursor position will be overwritten.
-
 use std::cmp::{max, min};
 
-use crossterm::cursor::MoveTo;
-use crossterm::style::{Print, ResetColor};
-use crossterm::terminal;
-use crossterm::terminal::{Clear, ClearType};
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::text::Span;
+use ratatui::widgets::{Clear, Widget};
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::{ColumnWidths, FsLayer};
 use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
 use crate::file::{FileEntry, FileKind, FileOwnerNameCache};
-use crate::state::view::{R, View};
+use crate::state::view::F;
 
 mod column;
 mod date_time;
@@ -27,31 +18,37 @@ mod file_owner;
 mod file_permissions;
 mod file_size;
 
-pub fn render(view: &mut View, layer: &mut FsLayer) -> R {
-	let terminal_size = terminal::size()?;
-	let cols = terminal_size.0 as usize;
-	let rows = terminal_size.1 as usize;
+pub fn render(layer: &mut FsLayer, frame: &mut F) {
+	let size = frame.size();
 	
-	let column_widths = get_or_update_column_widths(layer, cols);
-	let displayed_rows = collect_displayed_rows(&layer.tree, layer.selected_view_node_id, rows);
+	let column_widths = get_or_update_column_widths(layer, size.width);
 	let file_owner_name_cache = &mut layer.file_owner_name_cache;
 	
-	SingleFrame { view, rows, column_widths, file_owner_name_cache }.render(displayed_rows)
+	let rows = collect_displayed_rows(&layer.tree, layer.selected_view_node_id, size.height as usize);
+	
+	frame.render_widget(Clear, size);
+	frame.render_widget(FsWidget { rows, column_widths, file_owner_name_cache }, size);
 }
 
-fn get_or_update_column_widths(layer: &mut FsLayer, cols: usize) -> ColumnWidths {
+fn get_or_update_column_widths(layer: &mut FsLayer, cols: u16) -> ColumnWidths {
 	let mut column_widths = *layer.column_width_cache.get_or_insert_with(|| {
-		let mut result = ColumnWidths::default();
+		let mut name: usize = 0;
+		let mut user: usize = 0;
+		let mut group: usize = 0;
 		
 		for node in layer.tree.view.into_iter() {
 			let entry = layer.tree.get_entry(&node).unwrap_or_else(|| FileEntry::dummy_as_ref());
 			
-			result.name = max(result.name, get_node_level(&node) + entry.name().len());
-			result.user = max(result.user, layer.file_owner_name_cache.get_user(entry.uid()).len());
-			result.group = max(result.group, layer.file_owner_name_cache.get_group(entry.gid()).len());
+			name = max(name, get_node_level(&node) + Span::from(entry.name().str()).width());
+			user = max(user, layer.file_owner_name_cache.get_user(entry.uid()).len());
+			group = max(group, layer.file_owner_name_cache.get_group(entry.gid()).len());
 		}
 		
-		result
+		ColumnWidths {
+			name: u16::try_from(name).unwrap_or(u16::MAX),
+			user: u16::try_from(user).unwrap_or(u16::MAX),
+			group: u16::try_from(group).unwrap_or(u16::MAX),
+		}
 	});
 	
 	let owner_column_width = column_widths.user + 1 + column_widths.group;
@@ -106,67 +103,21 @@ fn move_cursor<'a, F>(tree: &'a FsTree, cursor: &mut Option<NodeId>, func: F) ->
 	next_node
 }
 
-struct SingleFrame<'a> {
-	view: &'a mut View,
-	rows: usize,
+struct FsWidget<'a> {
+	rows: Vec<NodeRow<'a>>,
 	column_widths: ColumnWidths,
 	file_owner_name_cache: &'a mut FileOwnerNameCache,
 }
 
-impl<'a> SingleFrame<'a> {
-	fn render(&mut self, rows: Vec<NodeRow<'a>>) -> R {
-		for (index, row) in rows.iter().enumerate() {
+impl<'a> Widget for FsWidget<'a> {
+	fn render(self, _area: Rect, buf: &mut Buffer) {
+		for (index, row) in self.rows.iter().enumerate() {
 			if let Ok(row_index) = u16::try_from(index) {
-				self.render_row(row_index, row)?;
+				row.render(buf, row_index, &self.column_widths, self.file_owner_name_cache);
 			} else {
 				break;
 			}
 		};
-		
-		for y in rows.len()..self.rows {
-			if let Ok(row_index) = u16::try_from(y) {
-				self.view.queue(MoveTo(0, row_index))?;
-				self.view.queue(Clear(ClearType::UntilNewLine))?;
-			} else {
-				break;
-			}
-		}
-		
-		Ok(())
-	}
-	
-	fn render_row(&mut self, row_index: u16, row: &NodeRow) -> R {
-		let entry = row.entry;
-		
-		self.view.queue(MoveTo(0, row_index))?;
-		
-		file_name::print(self.view, entry, row.level, self.column_widths.name, row.is_selected)?;
-		
-		self.print_column_separator()?;
-		
-		file_size::print(self.view, if let FileKind::File { size } = entry.kind() { Some(*size) } else { None })?;
-		
-		self.print_column_separator()?;
-		
-		date_time::print(self.view, entry.modified_time())?;
-		
-		self.print_column_separator()?;
-		
-		file_owner::print(self.view, self.file_owner_name_cache.get_user(entry.uid()), self.column_widths.user)?;
-		self.view.queue(Print(" "))?;
-		file_owner::print(self.view, self.file_owner_name_cache.get_group(entry.gid()), self.column_widths.group)?;
-		
-		self.print_column_separator()?;
-		
-		file_permissions::print(self.view, entry.kind(), entry.mode())?;
-		
-		self.view.queue(ResetColor)?;
-		self.view.queue(Clear(ClearType::UntilNewLine))
-	}
-	
-	fn print_column_separator(&mut self) -> R {
-		self.view.queue(ResetColor)?;
-		self.view.queue(Print("  "))
 	}
 }
 
@@ -183,6 +134,46 @@ impl<'a> NodeRow<'a> {
 			entry: tree.get_entry(view_node).unwrap_or_else(|| FileEntry::dummy_as_ref()),
 			is_selected,
 		};
+	}
+	
+	fn render(&self, buf: &mut Buffer, y: u16, column_widths: &ColumnWidths, file_owner_name_cache: &mut FileOwnerNameCache) {
+		let entry = self.entry;
+		
+		let width = buf.area().width;
+		let mut x = 0;
+		
+		file_name::print(buf, x, y, entry, self.level, column_widths.name, self.is_selected);
+		x += column_widths.name + 2;
+		
+		if x + file_size::COLUMN_WIDTH > width {
+			return;
+		}
+		
+		file_size::print(buf, x, y, if let FileKind::File { size } = entry.kind() { Some(*size) } else { None });
+		x += file_size::COLUMN_WIDTH + 2;
+		
+		if x + date_time::COLUMN_WIDTH > width {
+			return;
+		}
+		
+		date_time::print(buf, x, y, entry.modified_time());
+		x += date_time::COLUMN_WIDTH + 2;
+		
+		if x + column_widths.user + 1 + column_widths.group > width {
+			return;
+		}
+		
+		file_owner::print(buf, x, y, file_owner_name_cache.get_user(entry.uid()), column_widths.user);
+		x += column_widths.user + 1;
+		
+		file_owner::print(buf, x, y, file_owner_name_cache.get_group(entry.gid()), column_widths.group);
+		x += column_widths.group + 2;
+		
+		if x + file_permissions::COLUMN_WIDTH > width {
+			return;
+		}
+		
+		file_permissions::print(buf, x, y, entry.kind(), entry.mode());
 	}
 }
 
