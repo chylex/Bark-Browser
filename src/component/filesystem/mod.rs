@@ -1,7 +1,10 @@
+use std::cell::RefCell;
 use std::path::Path;
+use std::rc::Rc;
 
 use slab_tree::{NodeId, NodeRef};
 
+use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::FileOwnerNameCache;
 use crate::state::action::{ActionResult, KeyBinding};
@@ -9,12 +12,14 @@ use crate::state::layer::Layer;
 use crate::state::view::F;
 
 mod action;
+mod event;
 mod render;
 mod tree;
 
 pub struct FsLayer {
 	pub tree: FsTree,
 	pub selected_view_node_id: NodeId,
+	pending_events: Rc<RefCell<Vec<FsLayerEvent>>>,
 	file_owner_name_cache: FileOwnerNameCache,
 	column_width_cache: Option<ColumnWidths>,
 }
@@ -29,6 +34,7 @@ impl FsLayer {
 		Self {
 			tree,
 			selected_view_node_id: root_id,
+			pending_events: Rc::new(RefCell::new(Vec::new())),
 			file_owner_name_cache: FileOwnerNameCache::new(),
 			column_width_cache: None,
 		}
@@ -49,6 +55,10 @@ impl Layer for FsLayer {
 	}
 	
 	fn render(&mut self, frame: &mut F) {
+		for event in self.pending_events.take() {
+			event.handle(self);
+		}
+		
 		render::render(self, frame)
 	}
 }

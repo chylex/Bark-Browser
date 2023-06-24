@@ -12,6 +12,7 @@ pub enum ActionResult {
 	Nothing,
 	Redraw,
 	PushLayer(Box<dyn Layer>),
+	ReplaceLayer(Box<dyn Layer>),
 	PopLayer,
 }
 

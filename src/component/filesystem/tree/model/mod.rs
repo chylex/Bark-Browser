@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use slab_tree::{NodeId, NodeMut, NodeRef, Tree};
+use slab_tree::{NodeId, NodeMut, NodeRef, RemoveBehavior, Tree};
 
 use crate::file::FileEntry;
 
@@ -30,6 +30,10 @@ impl FsTreeModel {
 	
 	pub fn get_mut(&mut self, node_id: NodeId) -> Option<NodeMut<FsTreeModelNode>> {
 		self.inner.get_mut(node_id)
+	}
+	
+	pub fn remove(&mut self, node_id: NodeId) -> Option<FsTreeModelNode> {
+		self.inner.remove(node_id, RemoveBehavior::DropChildren)
 	}
 }
 

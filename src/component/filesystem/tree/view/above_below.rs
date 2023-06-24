@@ -3,11 +3,11 @@ use slab_tree::{NodeId, NodeRef};
 use crate::component::filesystem::tree::{FsTreeView, FsTreeViewNode};
 
 impl FsTreeView {
-	pub fn get_node_above(&self, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
-		if let Some(prev_sibling) = selected_node.prev_sibling() {
+	pub fn get_node_above(&self, node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
+		if let Some(prev_sibling) = node.prev_sibling() {
 			Some(self.get_last_descendant_or_self(prev_sibling.node_id()))
 		} else {
-			selected_node.parent().map(|parent| parent.node_id())
+			node.parent().map(|parent| parent.node_id())
 		}
 	}
 	
@@ -24,6 +24,14 @@ impl FsTreeView {
 			}
 			None
 		}
+	}
+	
+	pub fn get_node_above_id(&self, node_id: NodeId) -> Option<NodeId> {
+		self.get(node_id).and_then(|node| self.get_node_above(&node))
+	}
+	
+	pub fn get_node_below_id(&self, node_id: NodeId) -> Option<NodeId> {
+		self.get(node_id).and_then(|node| self.get_node_below(&node))
 	}
 	
 	fn get_last_descendant_or_self(&self, id: NodeId) -> NodeId {

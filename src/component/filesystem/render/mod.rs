@@ -109,7 +109,7 @@ struct FsWidget<'a> {
 	file_owner_name_cache: &'a mut FileOwnerNameCache,
 }
 
-impl<'a> Widget for FsWidget<'a> {
+impl Widget for FsWidget<'_> {
 	fn render(self, _area: Rect, buf: &mut Buffer) {
 		for (index, row) in self.rows.iter().enumerate() {
 			if let Ok(row_index) = u16::try_from(index) {

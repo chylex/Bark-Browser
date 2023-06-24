@@ -48,6 +48,12 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 					continue 'render;
 				}
 				
+				ActionResult::ReplaceLayer(layer) => {
+					state.pop_layer();
+					state.push_layer(layer);
+					continue 'render;
+				}
+				
 				ActionResult::PopLayer => {
 					if state.pop_layer() {
 						break 'render;

@@ -1,4 +1,4 @@
-use slab_tree::{NodeId, NodeMut, NodeRef, Tree};
+use slab_tree::{NodeId, NodeMut, NodeRef, RemoveBehavior, Tree};
 
 use crate::component::filesystem::tree::FsTreeModel;
 
@@ -38,6 +38,10 @@ impl FsTreeView {
 	
 	pub fn get_mut(&mut self, node_id: NodeId) -> Option<NodeMut<FsTreeViewNode>> {
 		self.inner.get_mut(node_id)
+	}
+	
+	pub fn remove(&mut self, node_id: NodeId) -> Option<FsTreeViewNode> {
+		self.inner.remove(node_id, RemoveBehavior::DropChildren)
 	}
 	
 	fn sort_children(children: &mut [NodeId], model: &FsTreeModel) {
