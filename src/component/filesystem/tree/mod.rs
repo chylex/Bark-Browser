@@ -46,4 +46,12 @@ impl FsTree {
 	pub fn traverse_up_root(&mut self) -> Option<NodeId> {
 		self.view.traverse_up_root(&mut self.model)
 	}
+	
+	pub fn refresh_children(&mut self, view_node_id: NodeId) -> bool {
+		if let Some(view_node) = self.view.get(view_node_id) {
+			self.model.refresh_children(view_node.data().model_node_id()) && self.view.refresh_children(view_node_id, &self.model)
+		} else {
+			false
+		}
+	}
 }

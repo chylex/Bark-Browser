@@ -5,6 +5,7 @@ use crate::component::filesystem::tree::FsTreeModel;
 mod above_below;
 mod expand_collapse;
 mod iterator;
+mod refresh;
 mod set_root;
 
 pub struct FsTreeView {

@@ -27,6 +27,10 @@ impl FsTreeModel {
 		}
 	}
 	
+	pub fn get_children(&self, node_id: NodeId) -> Option<Vec<NodeId>> {
+		self.get(node_id).and_then(|node| node.first_child().map(|node| node.node_id()).map(|id| self.collect_next_siblings(id)))
+	}
+	
 	fn collect_next_siblings(&self, first_child_id: NodeId) -> Vec<NodeId> {
 		let mut children = Vec::new();
 		let mut child_id = Some(first_child_id);

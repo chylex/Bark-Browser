@@ -6,6 +6,7 @@ use crate::file::FileEntry;
 
 mod children;
 mod parents;
+mod refresh;
 
 pub struct FsTreeModel {
 	inner: Tree<FsTreeModelNode>,
