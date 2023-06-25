@@ -4,7 +4,8 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 
 use crate::component::dialog::message::MessageDialogActions;
-use crate::state::action::{ActionResult, KeyBinding};
+use crate::input::keymap::KeyBinding;
+use crate::state::action::ActionResult;
 
 type ActionHashMap = HashMap<KeyBinding, Box<dyn Fn() -> ActionResult>>;
 
@@ -24,7 +25,7 @@ impl<'a> MessageDialogActionMap<'a> {
 	
 	pub fn ok() -> Self {
 		let mut map = ActionHashMap::new();
-		map.insert(KeyBinding::Char('o'), Box::new(|| ActionResult::PopLayer));
+		map.insert(KeyBinding::char('o'), Box::new(|| ActionResult::PopLayer));
 		
 		Self::new(map, vec![
 			Span::styled("o", Self::highlight()),
@@ -34,8 +35,8 @@ impl<'a> MessageDialogActionMap<'a> {
 	
 	pub fn yes_no(yes_action: Box<dyn Fn() -> ActionResult>) -> Self {
 		let mut map = ActionHashMap::new();
-		map.insert(KeyBinding::Char('y'), yes_action);
-		map.insert(KeyBinding::Char('n'), Box::new(|| ActionResult::PopLayer));
+		map.insert(KeyBinding::char('y'), yes_action);
+		map.insert(KeyBinding::char('n'), Box::new(|| ActionResult::PopLayer));
 		
 		Self::new(map, vec![
 			Span::styled("y", Self::highlight()),

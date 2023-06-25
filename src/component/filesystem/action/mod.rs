@@ -1,4 +1,3 @@
-use crossterm::event::{KeyCode, KeyModifiers};
 use lazy_static::lazy_static;
 
 use crate::component::filesystem::action::file::DeleteSelected;
@@ -6,32 +5,45 @@ use crate::component::filesystem::action::movement::{MoveDown, MoveOrTraverseUpP
 use crate::component::filesystem::action::quit::Quit;
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
-use crate::state::action::ActionMap;
+use crate::input::keymap::KeyMap;
+use crate::state::action::Action;
 
 mod quit;
 pub mod file;
 pub mod movement;
 pub mod tree;
 
+type ActionKeyMap = KeyMap<Box<dyn Action<FsLayer> + Sync>>;
+
 lazy_static! {
-	pub static ref ACTION_MAP: ActionMap<FsLayer> = create_action_map();
+	pub static ref ACTION_MAP: ActionKeyMap = create_action_map();
 }
 
-fn create_action_map() -> ActionMap<FsLayer> {
-	let mut me = ActionMap::new();
-	me.add_char_mapping(' ', ExpandCollapse);
-	me.add_char_mapping('r', RefreshChildrenOfSelected);
-	me.add_char_mapping('J', MoveToNextSibling);
-	me.add_char_mapping('K', MoveToPreviousSibling);
-	me.add_char_mapping('d', DeleteSelected);
-	me.add_char_mapping('h', MoveOrTraverseUpParent);
-	me.add_char_mapping('j', MoveDown);
-	me.add_char_mapping('k', MoveUp);
-	me.add_char_mapping('q', Quit);
-	me.add_key_mapping(KeyCode::Down, KeyModifiers::ALT, MoveToNextSibling);
-	me.add_key_mapping(KeyCode::Down, KeyModifiers::NONE, MoveDown);
-	me.add_key_mapping(KeyCode::Left, KeyModifiers::NONE, MoveOrTraverseUpParent);
-	me.add_key_mapping(KeyCode::Up, KeyModifiers::ALT, MoveToPreviousSibling);
-	me.add_key_mapping(KeyCode::Up, KeyModifiers::NONE, MoveUp);
+fn create_action_map() -> ActionKeyMap {
+	let mut me = ActionKeyMap::new();
+	
+	map(&mut me, " ", ExpandCollapse);
+	map(&mut me, "d", DeleteSelected);
+	map(&mut me, "h", MoveOrTraverseUpParent);
+	map(&mut me, "j", MoveDown);
+	map(&mut me, "J", MoveToNextSibling);
+	map(&mut me, "k", MoveUp);
+	map(&mut me, "K", MoveToPreviousSibling);
+	map(&mut me, "q", Quit);
+	map(&mut me, "r", RefreshChildrenOfSelected);
+	
+	map(&mut me, "<Down>", MoveDown);
+	map(&mut me, "<A-Down>", MoveToNextSibling);
+	map(&mut me, "<Left>", MoveOrTraverseUpParent);
+	map(&mut me, "<Up>", MoveUp);
+	map(&mut me, "<A-Up>", MoveToPreviousSibling);
+	
 	me
+}
+
+fn map(map: &mut ActionKeyMap, key_binding_str: &str, action: impl Action<FsLayer> + Sync + 'static) {
+	// Panic on error, since we are hard-coding the key bindings.
+	if let Err(err) = map.insert(key_binding_str, Box::new(action)) {
+		panic!("Failed to insert key binding: {:?}", err);
+	}
 }

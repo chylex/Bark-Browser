@@ -4,7 +4,8 @@ use ratatui::text::{Line, Span, Text};
 use ratatui::widgets::Paragraph;
 
 use crate::component::dialog::render_dialog_border;
-use crate::state::action::{ActionResult, KeyBinding};
+use crate::input::keymap::KeyBinding;
+use crate::state::action::ActionResult;
 use crate::state::layer::Layer;
 use crate::state::view::F;
 

@@ -5,12 +5,15 @@ use std::process::ExitCode;
 
 use crossterm::event::{Event, KeyEventKind};
 
-use crate::state::action::{ActionResult, KeyBinding};
+use input::keymap::KeyBinding;
+
+use crate::state::action::ActionResult;
 use crate::state::State;
 use crate::state::view::View;
 
 mod component;
 mod file;
+mod input;
 mod state;
 mod util;
 
