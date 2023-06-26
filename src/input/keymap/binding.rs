@@ -14,6 +14,14 @@ impl KeyBinding {
 	pub fn char(char: char) -> Self {
 		Self::new(KeyCode::Char(char), KeyModifiers::NONE)
 	}
+	
+	pub fn code(&self) -> KeyCode {
+		self.code
+	}
+	
+	pub fn modifiers(&self) -> KeyModifiers {
+		self.modifiers
+	}
 }
 
 impl From<KeyEvent> for KeyBinding {
