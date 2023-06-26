@@ -1,13 +1,11 @@
-use std::cell::RefCell;
 use std::path::Path;
-use std::rc::Rc;
 
 use ratatui::style::Color;
 use slab_tree::NodeId;
 
 use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLayer};
+use crate::component::filesystem::{FsLayer, FsLayerPendingEvents};
 use crate::component::filesystem::event::FsLayerEvent;
-use crate::component::filesystem::FsLayer;
 use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
 
@@ -27,7 +25,7 @@ impl Action<FsLayer> for DeleteSelected {
 	}
 }
 
-fn create_confirmation_dialog<'a>(entry_to_delete: &FileEntry, pending_events: Rc<RefCell<Vec<FsLayerEvent>>>, view_node_id_to_delete: NodeId) -> Option<MessageDialogLayer<'a>> {
+fn create_confirmation_dialog<'a>(entry_to_delete: &FileEntry, pending_events: FsLayerPendingEvents, view_node_id_to_delete: NodeId) -> Option<MessageDialogLayer<'a>> {
 	entry_to_delete.path().map(Path::to_path_buf).map(move |path| {
 		MessageDialogLayer::new(Color::LightRed, "Confirm Deletion", format!("Delete {}?", path.to_string_lossy()), MessageDialogActionMap::yes_no(Box::new(move || {
 			match delete_path_recursively(&path) {

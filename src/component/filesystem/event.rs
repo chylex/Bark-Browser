@@ -5,12 +5,15 @@ use slab_tree::NodeId;
 
 use crate::component::filesystem::FsLayer;
 
+pub type FsLayerPendingEvents = Rc<RefCell<Vec<FsLayerEvent>>>;
+
 pub enum FsLayerEvent {
-	DeleteViewNode(NodeId)
+	RefreshViewNodeChildren(NodeId),
+	DeleteViewNode(NodeId),
 }
 
 impl FsLayerEvent {
-	pub fn push(pending_events: Rc<RefCell<Vec<FsLayerEvent>>>, event: FsLayerEvent) -> bool {
+	pub fn push(pending_events: FsLayerPendingEvents, event: FsLayerEvent) -> bool {
 		if let Ok(mut pending_events) = pending_events.try_borrow_mut() {
 			pending_events.push(event);
 			true
@@ -21,9 +24,15 @@ impl FsLayerEvent {
 	
 	pub fn handle(&self, layer: &mut FsLayer) {
 		match self {
+			FsLayerEvent::RefreshViewNodeChildren(view_node_id) => handle_refresh_view_node_children(layer, view_node_id),
 			FsLayerEvent::DeleteViewNode(view_node_id) => handle_delete_view_node(layer, view_node_id),
 		}
 	}
+}
+
+fn handle_refresh_view_node_children(layer: &mut FsLayer, view_node_id: &NodeId) {
+	layer.tree.refresh_children(*view_node_id);
+	layer.tree_structure_changed();
 }
 
 fn handle_delete_view_node(layer: &mut FsLayer, view_node_id: &NodeId) {

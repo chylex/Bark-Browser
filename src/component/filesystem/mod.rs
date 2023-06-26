@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use slab_tree::{NodeId, NodeRef};
 
-use crate::component::filesystem::event::FsLayerEvent;
+use crate::component::filesystem::event::FsLayerPendingEvents;
 use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::FileOwnerNameCache;
 use crate::input::keymap::{KeyBinding, KeyMapLookupResult};
@@ -21,7 +21,7 @@ pub struct FsLayer {
 	pub tree: FsTree,
 	pub selected_view_node_id: NodeId,
 	pending_keys: Vec<KeyBinding>,
-	pending_events: Rc<RefCell<Vec<FsLayerEvent>>>,
+	pending_events: FsLayerPendingEvents,
 	file_owner_name_cache: FileOwnerNameCache,
 	column_width_cache: Option<ColumnWidths>,
 }
