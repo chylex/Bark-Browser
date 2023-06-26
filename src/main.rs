@@ -30,6 +30,7 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 		return Ok(ExitCode::FAILURE);
 	}
 	
+	View::restore_terminal_on_panic();
 	let mut view = View::stdout()?;
 	let mut state = State::with_root_path(&path.unwrap());
 	

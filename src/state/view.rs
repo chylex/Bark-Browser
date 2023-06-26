@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, panic};
 use std::io::{stdout, Stdout};
 
 use crossterm::{ExecutableCommand, terminal};
@@ -23,6 +23,15 @@ impl View {
 		term.clear()?;
 		
 		Ok(Self { term })
+	}
+	
+	pub fn restore_terminal_on_panic() {
+		let prev_hook = panic::take_hook();
+		
+		panic::set_hook(Box::new(move |panic_info| {
+			let _ = terminal::disable_raw_mode();
+			prev_hook(panic_info);
+		}));
 	}
 	
 	pub fn close(mut self) -> io::Result<()> {
