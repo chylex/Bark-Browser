@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 
 use crate::component::dialog::message::MessageDialogActions;
@@ -20,7 +20,7 @@ impl<'a> MessageDialogActionMap<'a> {
 	}
 	
 	fn highlight() -> Style {
-		Style::default().fg(Color::White).add_modifier(Modifier::BOLD)
+		Style::default().fg(Color::LightCyan)
 	}
 	
 	pub fn ok() -> Self {
