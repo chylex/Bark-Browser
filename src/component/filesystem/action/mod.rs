@@ -32,6 +32,8 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "q", Quit);
 	map(&mut me, "r", RefreshChildrenOfSelected);
 	
+	map(&mut me, "<C-c>", Quit);
+	
 	map(&mut me, "<Down>", MoveDown);
 	map(&mut me, "<A-Down>", MoveToNextSibling);
 	map(&mut me, "<Left>", MoveOrTraverseUpParent);
