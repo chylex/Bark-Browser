@@ -84,7 +84,15 @@ fn parse_key_name(key: &str) -> Result<KeyCode, ParseError> {
 		"Space" => Ok(KeyCode::Char(' ')),
 		"Tab" => Ok(KeyCode::Tab),
 		"Up" => Ok(KeyCode::Up),
-		_ => Err(ParseError::InvalidKeyName),
+		
+		_ => {
+			let chars = key.chars().collect::<Vec<_>>();
+			if chars.len() == 1 {
+				Ok(KeyCode::Char(chars[0]))
+			} else {
+				Err(ParseError::InvalidKeyName)
+			}
+		},
 	}
 }
 
