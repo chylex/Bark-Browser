@@ -31,7 +31,7 @@ fn create_confirmation_dialog<'a>(entry_to_delete: &FileEntry, pending_events: F
 		MessageDialogLayer::new(Color::LightRed, "Confirm Deletion", format!("Delete {}?", path.to_string_lossy()), MessageDialogActionMap::yes_no(Box::new(move || {
 			match delete_path_recursively(&path) {
 				Ok(_) => {
-					FsLayerEvent::push(pending_events.clone(), FsLayerEvent::DeleteViewNode(view_node_id_to_delete));
+					FsLayerEvent::DeleteViewNode(view_node_id_to_delete).enqueue(&pending_events);
 					ActionResult::PopLayer
 				}
 				Err(e) => {

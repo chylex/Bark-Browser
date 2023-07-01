@@ -13,9 +13,9 @@ pub enum FsLayerEvent {
 }
 
 impl FsLayerEvent {
-	pub fn push(pending_events: FsLayerPendingEvents, event: FsLayerEvent) -> bool {
+	pub fn enqueue(self, pending_events: &FsLayerPendingEvents) -> bool {
 		if let Ok(mut pending_events) = pending_events.try_borrow_mut() {
-			pending_events.push(event);
+			pending_events.push(self);
 			true
 		} else {
 			false

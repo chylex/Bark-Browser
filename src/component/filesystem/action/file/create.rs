@@ -67,7 +67,7 @@ fn create_prompt<F>(kind: &'static str, parent_folder: PathBuf, create_function:
 		
 		match create_function(file_path) {
 			Ok(_) => {
-				FsLayerEvent::push(pending_events.clone(), FsLayerEvent::RefreshViewNodeChildren(view_node_id_to_refresh));
+				FsLayerEvent::RefreshViewNodeChildren(view_node_id_to_refresh).enqueue(&pending_events);
 				ActionResult::PopLayer
 			}
 			Err(e) => {
