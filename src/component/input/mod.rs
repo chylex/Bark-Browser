@@ -8,6 +8,7 @@ use ratatui::widgets::{Clear, Paragraph};
 
 use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
+use crate::state::Environment;
 use crate::state::layer::Layer;
 use crate::state::view::F;
 
@@ -23,7 +24,7 @@ impl InputFieldLayer {
 }
 
 impl Layer for InputFieldLayer {
-	fn handle_input(&mut self, key_binding: KeyBinding) -> ActionResult {
+	fn handle_input(&mut self, _environment: &Environment, key_binding: KeyBinding) -> ActionResult {
 		match key_binding.code() {
 			KeyCode::Esc => {
 				ActionResult::PopLayer

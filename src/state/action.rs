@@ -1,7 +1,8 @@
+use crate::state::Environment;
 use crate::state::layer::Layer;
 
 pub trait Action<L> {
-	fn perform(&self, layer: &mut L) -> ActionResult;
+	fn perform(&self, layer: &mut L, environment: &Environment) -> ActionResult;
 }
 
 pub enum ActionResult {

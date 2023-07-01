@@ -9,6 +9,7 @@ use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::FileOwnerNameCache;
 use crate::input::keymap::{KeyBinding, KeyMapLookupResult};
 use crate::state::action::ActionResult;
+use crate::state::Environment;
 use crate::state::layer::Layer;
 use crate::state::view::F;
 
@@ -56,7 +57,7 @@ impl FsLayer {
 }
 
 impl Layer for FsLayer {
-	fn handle_input(&mut self, key_binding: KeyBinding) -> ActionResult {
+	fn handle_input(&mut self, environment: &Environment, key_binding: KeyBinding) -> ActionResult {
 		self.pending_keys.push(key_binding);
 		
 		match action::ACTION_MAP.lookup(&self.pending_keys) {
@@ -66,7 +67,7 @@ impl Layer for FsLayer {
 			
 			KeyMapLookupResult::Found(action) => {
 				self.pending_keys.clear();
-				action.perform(self)
+				action.perform(self, environment)
 			}
 			
 			KeyMapLookupResult::None => {

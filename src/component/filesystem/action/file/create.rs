@@ -10,11 +10,12 @@ use crate::component::filesystem::FsLayer;
 use crate::component::input::InputFieldLayer;
 use crate::file::FileKind;
 use crate::state::action::{Action, ActionResult};
+use crate::state::Environment;
 
 pub struct CreateFile;
 
 impl Action<FsLayer> for CreateFile {
-	fn perform(&self, layer: &mut FsLayer) -> ActionResult {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		create_impl(layer, "file", |p| fs::write(p, b""))
 	}
 }
@@ -22,7 +23,7 @@ impl Action<FsLayer> for CreateFile {
 pub struct CreateDirectory;
 
 impl Action<FsLayer> for CreateDirectory {
-	fn perform(&self, layer: &mut FsLayer) -> ActionResult {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		create_impl(layer, "directory", fs::create_dir)
 	}
 }

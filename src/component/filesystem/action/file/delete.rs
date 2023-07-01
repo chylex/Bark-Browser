@@ -8,11 +8,12 @@ use crate::component::filesystem::{FsLayer, FsLayerPendingEvents};
 use crate::component::filesystem::event::FsLayerEvent;
 use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
+use crate::state::Environment;
 
 pub struct DeleteSelected;
 
 impl Action<FsLayer> for DeleteSelected {
-	fn perform(&self, layer: &mut FsLayer) -> ActionResult {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(view_node_to_delete) = layer.selected_node() {
 			if let Some(entry_to_delete) = layer.tree.get_entry(&view_node_to_delete) {
 				if let Some(dialog) = create_confirmation_dialog(entry_to_delete, layer.pending_events.clone(), view_node_to_delete.node_id()) {

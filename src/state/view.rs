@@ -4,6 +4,7 @@ use std::io::{stdout, Stdout};
 use crossterm::{ExecutableCommand, terminal};
 use ratatui::{Frame, Terminal};
 use ratatui::backend::CrosstermBackend;
+use ratatui::layout::Rect;
 use ratatui::terminal::CompletedFrame;
 
 pub type F<'a> = Frame<'a, CrosstermBackend<Stdout>>;
@@ -39,6 +40,10 @@ impl View {
 		self.term.backend_mut().execute(terminal::LeaveAlternateScreen)?;
 		
 		terminal::disable_raw_mode()
+	}
+	
+	pub fn size(&self) -> io::Result<Rect> {
+		self.term.size()
 	}
 	
 	pub fn render<R>(&mut self, renderer: R) -> io::Result<CompletedFrame> where R: FnOnce(&mut F) {

@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected};
-use crate::component::filesystem::action::movement::{MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp};
+use crate::component::filesystem::action::movement::{HeightRatio, MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp, RepeatMovement};
 use crate::component::filesystem::action::quit::Quit;
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
@@ -34,7 +34,11 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "q", Quit);
 	map(&mut me, "r", RefreshChildrenOfSelected);
 	
+	map(&mut me, "<C-b>", RepeatMovement::new(MoveUp, HeightRatio(1)));
 	map(&mut me, "<C-c>", Quit);
+	map(&mut me, "<C-d>", RepeatMovement::new(MoveDown, HeightRatio(2)));
+	map(&mut me, "<C-f>", RepeatMovement::new(MoveDown, HeightRatio(1)));
+	map(&mut me, "<C-u>", RepeatMovement::new(MoveUp, HeightRatio(2)));
 	
 	map(&mut me, "<Down>", MoveDown);
 	map(&mut me, "<A-Down>", MoveToNextSibling);

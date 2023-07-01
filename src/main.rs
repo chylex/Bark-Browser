@@ -8,6 +8,7 @@ use crossterm::event::{Event, KeyEventKind};
 use input::keymap::KeyBinding;
 
 use crate::state::action::ActionResult;
+use crate::state::Environment;
 use crate::state::State;
 use crate::state::view::View;
 
@@ -32,7 +33,9 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	
 	View::restore_terminal_on_panic();
 	let mut view = View::stdout()?;
-	let mut state = State::with_root_path(&path.unwrap());
+	
+	let environment = Environment::try_from(&view)?;
+	let mut state = State::with_root_path(&path.unwrap(), environment);
 	
 	'render: loop {
 		view.render(|frame| state.render(frame))?;
@@ -81,7 +84,8 @@ fn handle_event(state: &mut State, event: Event) -> ActionResult {
 		} else {
 			state.handle_input(KeyBinding::from(key))
 		}
-	} else if let Event::Resize(_, _) = event {
+	} else if let Event::Resize(w, h) = event {
+		state.handle_resize(w, h);
 		ActionResult::Redraw
 	} else {
 		ActionResult::Nothing
