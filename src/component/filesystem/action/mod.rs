@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 
-use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected};
+use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
 use crate::component::filesystem::action::movement::{HeightRatio, MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp, RepeatMovement};
 use crate::component::filesystem::action::quit::Quit;
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
@@ -23,6 +23,7 @@ fn create_action_map() -> ActionKeyMap {
 	let mut me = ActionKeyMap::new();
 	
 	map(&mut me, " ", ExpandCollapse);
+	map(&mut me, "e", EditSelected);
 	map(&mut me, "d", DeleteSelected);
 	map(&mut me, "h", MoveOrTraverseUpParent);
 	map(&mut me, "j", MoveDown);
