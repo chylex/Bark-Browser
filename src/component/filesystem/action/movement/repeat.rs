@@ -31,7 +31,7 @@ impl<A: MovementAction, D: MovementDistance> Action<FsLayer> for RepeatMovement<
 		
 		if target_node_id != start_node_id {
 			layer.selected_view_node_id = target_node_id;
-			ActionResult::Redraw
+			ActionResult::Draw
 		} else {
 			ActionResult::Nothing
 		}

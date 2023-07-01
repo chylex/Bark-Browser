@@ -7,6 +7,7 @@ pub trait Action<L> {
 
 pub enum ActionResult {
 	Nothing,
+	Draw,
 	Redraw,
 	PushLayer(Box<dyn Layer>),
 	ReplaceLayer(Box<dyn Layer>),

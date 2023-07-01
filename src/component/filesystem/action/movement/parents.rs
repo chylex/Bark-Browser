@@ -21,11 +21,11 @@ impl Action<FsLayer> for MoveOrTraverseUpParent {
 		if let Some(selected_node) = layer.selected_node() {
 			if let Some(new_selected_id) = MoveToParent::get_target(&layer.tree.view, &selected_node) {
 				layer.selected_view_node_id = new_selected_id;
-				return ActionResult::Redraw;
+				return ActionResult::Draw;
 			} else if let Some(new_seelected_id) = layer.tree.traverse_up_root() {
 				layer.selected_view_node_id = new_seelected_id;
 				layer.tree_structure_changed();
-				return ActionResult::Redraw;
+				return ActionResult::Draw;
 			}
 		}
 		

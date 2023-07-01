@@ -46,7 +46,12 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 					continue 'event;
 				}
 				
+				ActionResult::Draw => {
+					continue 'render;
+				}
+				
 				ActionResult::Redraw => {
+					view.clear()?;
 					continue 'render;
 				}
 				
@@ -86,7 +91,7 @@ fn handle_event(state: &mut State, event: Event) -> ActionResult {
 		}
 	} else if let Event::Resize(w, h) = event {
 		state.handle_resize(w, h);
-		ActionResult::Redraw
+		ActionResult::Draw
 	} else {
 		ActionResult::Nothing
 	}

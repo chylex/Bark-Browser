@@ -27,7 +27,7 @@ impl<T: MovementAction> Action<FsLayer> for T {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(next) = layer.selected_node().and_then(|node| Self::get_target(&layer.tree.view, &node)) {
 			layer.selected_view_node_id = next;
-			ActionResult::Redraw
+			ActionResult::Draw
 		} else {
 			ActionResult::Nothing
 		}

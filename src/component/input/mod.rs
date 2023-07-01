@@ -36,7 +36,7 @@ impl Layer for InputFieldLayer {
 			
 			KeyCode::Backspace => {
 				self.text.pop();
-				ActionResult::Redraw
+				ActionResult::Draw
 			}
 			
 			KeyCode::Char(c) => {
@@ -47,7 +47,7 @@ impl Layer for InputFieldLayer {
 					
 					_ => {
 						self.text.push(c);
-						ActionResult::Redraw
+						ActionResult::Draw
 					}
 				}
 			}

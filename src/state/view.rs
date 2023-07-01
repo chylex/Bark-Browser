@@ -46,6 +46,10 @@ impl View {
 		self.term.size()
 	}
 	
+	pub fn clear(&mut self) -> io::Result<()> {
+		self.term.clear()
+	}
+	
 	pub fn render<R>(&mut self, renderer: R) -> io::Result<CompletedFrame> where R: FnOnce(&mut F) {
 		self.term.draw(renderer)
 	}

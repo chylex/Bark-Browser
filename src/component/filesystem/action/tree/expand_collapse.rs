@@ -8,7 +8,7 @@ impl Action<FsLayer> for ExpandCollapse {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if layer.tree.expand_or_collapse(layer.selected_view_node_id) {
 			layer.tree_structure_changed();
-			ActionResult::Redraw
+			ActionResult::Draw
 		} else {
 			ActionResult::Nothing
 		}
