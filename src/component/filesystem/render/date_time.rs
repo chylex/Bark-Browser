@@ -52,6 +52,6 @@ fn print_hour_minute(buf: &mut Buffer, x: u16, y: u16, value: u32) {
 		buf.get_mut(x, y).set_char('0');
 		buf.get_mut(x + 1, y).set_char(single_digit);
 	} else {
-		buf.set_string(x, y, value.to_string(), Style::reset());
+		buf.set_string(x, y, value.to_string(), Style::default());
 	}
 }
