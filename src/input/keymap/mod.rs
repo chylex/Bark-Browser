@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 
 use parser::KeySequenceParser;
 
@@ -88,11 +89,29 @@ impl KeyMapInsertError {
 	fn new(sequence: String, error: KeyMapInsertErrorType) -> Self {
 		Self { sequence, error }
 	}
+	
+	pub fn sequence(&self) -> &str {
+		&self.sequence
+	}
+	
+	pub fn error(&self) -> &KeyMapInsertErrorType {
+		&self.error
+	}
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum KeyMapInsertErrorType {
 	EmptyKeySequence,
 	ConflictingKeySequence,
 	ParseError(ParseError),
+}
+
+impl Display for KeyMapInsertErrorType {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		match self {
+			KeyMapInsertErrorType::EmptyKeySequence => write!(f, "Empty key sequence."),
+			KeyMapInsertErrorType::ConflictingKeySequence => write!(f, "Conflicting key sequence."),
+			KeyMapInsertErrorType::ParseError(err) => write!(f, "Parse error: {}", err),
+		}
+	}
 }

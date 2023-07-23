@@ -53,6 +53,6 @@ fn create_action_map() -> ActionKeyMap {
 fn map(map: &mut ActionKeyMap, key_binding_str: &str, action: impl Action<FsLayer> + Sync + 'static) {
 	// Panic on error, since we are hard-coding the key bindings.
 	if let Err(err) = map.insert(key_binding_str, Box::new(action)) {
-		panic!("Failed to insert key binding: {:?}", err);
+		panic!("Failed to insert key binding '{}'. {}", err.sequence(), err.error());
 	}
 }

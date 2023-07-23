@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::str::Chars;
 
 use crossterm::event::{KeyCode, KeyModifiers};
@@ -49,7 +50,7 @@ impl<'a> KeySequenceParser<'a> {
 						"C" | "Ctrl" => KeyModifiers::CONTROL,
 						"S" | "Shift" => KeyModifiers::SHIFT,
 						"M" | "Super" => KeyModifiers::SUPER,
-						_ => return Err(ParseError::InvalidModifier),
+						_ => return Err(ParseError::InvalidModifier(current_part)),
 					};
 					current_part.clear();
 				},
@@ -101,16 +102,27 @@ fn parse_key_name(key: &str) -> Result<KeyCode, ParseError> {
 			if chars.len() == 1 {
 				Ok(KeyCode::Char(chars[0].to_ascii_lowercase()))
 			} else {
-				Err(ParseError::InvalidKeyName)
+				Err(ParseError::InvalidKeyName(key.to_string()))
 			}
 		},
 	}
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum ParseError {
-	InvalidKeyName,
-	InvalidModifier,
+	InvalidKeyName(String),
+	InvalidModifier(String),
 	CannotCombineShiftModifierWithCharacter,
 	MissingClosingAngledBracket,
+}
+
+impl Display for ParseError {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		match self {
+			ParseError::InvalidKeyName(key) => write!(f, "Invalid key name: {}", key),
+			ParseError::InvalidModifier(modifier) => write!(f, "Invalid modifier: {}", modifier),
+			ParseError::CannotCombineShiftModifierWithCharacter => f.write_str("Cannot combine shift modifier with character."),
+			ParseError::MissingClosingAngledBracket => f.write_str("Missing closing angled bracket."),
+		}
+	}
 }
