@@ -30,20 +30,31 @@ impl<'a> KeySequenceParser<'a> {
 		let mut current_part = String::new();
 		
 		for char in self.chars.by_ref() {
-			if char == '>' {
-				let code = parse_key_name(current_part.as_str())?;
-				return Ok(Some(KeyBinding::new(code, modifiers)));
-			} else if char == '-' {
-				modifiers |= match current_part.as_str() {
-					"A" => KeyModifiers::ALT,
-					"C" => KeyModifiers::CONTROL,
-					"M" => KeyModifiers::SUPER,
-					"S" => KeyModifiers::SHIFT,
-					_ => return Err(ParseError::InvalidModifier),
-				};
-				current_part.clear();
-			} else {
-				current_part.push(char);
+			match char {
+				'>' => {
+					let code = parse_key_name(current_part.as_str())?;
+					
+					if let KeyCode::Char(_) = code {
+						if modifiers.contains(KeyModifiers::SHIFT) {
+							return Err(ParseError::CannotCombineShiftModifierWithCharacter);
+						}
+					}
+					
+					return Ok(Some(KeyBinding::new(code, modifiers)));
+				},
+				
+				'-' => {
+					modifiers |= match current_part.as_str() {
+						"A" | "Alt" => KeyModifiers::ALT,
+						"C" | "Ctrl" => KeyModifiers::CONTROL,
+						"S" | "Shift" => KeyModifiers::SHIFT,
+						"M" | "Super" => KeyModifiers::SUPER,
+						_ => return Err(ParseError::InvalidModifier),
+					};
+					current_part.clear();
+				},
+				
+				_ => current_part.push(char),
 			}
 		}
 		
@@ -88,7 +99,7 @@ fn parse_key_name(key: &str) -> Result<KeyCode, ParseError> {
 		_ => {
 			let chars = key.chars().collect::<Vec<_>>();
 			if chars.len() == 1 {
-				Ok(KeyCode::Char(chars[0]))
+				Ok(KeyCode::Char(chars[0].to_ascii_lowercase()))
 			} else {
 				Err(ParseError::InvalidKeyName)
 			}
@@ -100,5 +111,6 @@ fn parse_key_name(key: &str) -> Result<KeyCode, ParseError> {
 pub enum ParseError {
 	InvalidKeyName,
 	InvalidModifier,
+	CannotCombineShiftModifierWithCharacter,
 	MissingClosingAngledBracket,
 }
