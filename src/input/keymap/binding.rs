@@ -7,19 +7,19 @@ pub struct KeyBinding {
 }
 
 impl KeyBinding {
-	pub fn new(code: KeyCode, modifiers: KeyModifiers) -> Self {
+	pub const fn new(code: KeyCode, modifiers: KeyModifiers) -> Self {
 		Self { code, modifiers }
 	}
 	
-	pub fn char(char: char) -> Self {
+	pub const fn char(char: char) -> Self {
 		Self::new(KeyCode::Char(char), KeyModifiers::NONE)
 	}
 	
-	pub fn code(&self) -> KeyCode {
+	pub const fn code(&self) -> KeyCode {
 		self.code
 	}
 	
-	pub fn modifiers(&self) -> KeyModifiers {
+	pub const fn modifiers(&self) -> KeyModifiers {
 		self.modifiers
 	}
 }
@@ -34,6 +34,6 @@ impl From<KeyEvent> for KeyBinding {
 			key_event.modifiers
 		};
 		
-		KeyBinding { code, modifiers }
+		Self { code, modifiers }
 	}
 }

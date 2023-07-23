@@ -24,8 +24,8 @@ impl FsLayerEvent {
 	
 	pub fn handle(&self, layer: &mut FsLayer) {
 		match self {
-			FsLayerEvent::RefreshViewNodeChildren(view_node_id) => handle_refresh_view_node_children(layer, view_node_id),
-			FsLayerEvent::DeleteViewNode(view_node_id) => handle_delete_view_node(layer, view_node_id),
+			Self::RefreshViewNodeChildren(view_node_id) => handle_refresh_view_node_children(layer, view_node_id),
+			Self::DeleteViewNode(view_node_id) => handle_delete_view_node(layer, view_node_id),
 		}
 	}
 }

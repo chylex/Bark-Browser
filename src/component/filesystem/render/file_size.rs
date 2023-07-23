@@ -1,3 +1,5 @@
+#![allow(clippy::arithmetic_side_effects)]
+
 use ratatui::buffer::Buffer;
 use ratatui::style::Style;
 
@@ -12,7 +14,7 @@ const UNITS: &[&str] = &[
 
 pub fn print(buf: &mut Buffer, x: u16, y: u16, size: Option<u64>) {
 	if let Some(size) = size {
-		print_size_with_unit(buf, x, y, size)
+		print_size_with_unit(buf, x, y, size);
 	}
 }
 
@@ -25,10 +27,14 @@ fn print_size_with_unit(buf: &mut Buffer, x: u16, y: u16, size: u64) {
 		unit += 1;
 	}
 	
+	#[allow(clippy::indexing_slicing)] // Guarded by previous loop.
 	let unit_symbol = UNITS[unit];
 	let symbol_width = unit_symbol.len();
 	let total_width = int_len(size) + 1 + symbol_width;
 	
+	#[allow(clippy::cast_possible_truncation)] // Widths are always small enough.
 	buf.set_string(x + COLUMN_WIDTH - total_width as u16, y, size.to_string(), Style::default());
+	
+	#[allow(clippy::cast_possible_truncation)] // Widths are always small enough.
 	buf.set_string(x + COLUMN_WIDTH - symbol_width as u16, y, unit_symbol, Style::default());
 }

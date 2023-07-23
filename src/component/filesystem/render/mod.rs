@@ -36,10 +36,10 @@ fn get_or_update_column_widths(layer: &mut FsLayer, cols: u16) -> ColumnWidths {
 		let mut user: usize = 0;
 		let mut group: usize = 0;
 		
-		for node in layer.tree.view.into_iter() {
+		for node in &layer.tree.view {
 			let entry = layer.tree.get_entry(&node).unwrap_or_else(|| FileEntry::dummy_as_ref());
 			
-			name = max(name, get_node_level(&node) + Span::from(entry.name().str()).width());
+			name = max(name, get_node_level(&node).saturating_add(Span::from(entry.name().str()).width()));
 			user = max(user, layer.file_owner_name_cache.get_user(entry.uid()).len());
 			group = max(group, layer.file_owner_name_cache.get_group(entry.gid()).len());
 		}
@@ -51,10 +51,10 @@ fn get_or_update_column_widths(layer: &mut FsLayer, cols: u16) -> ColumnWidths {
 		}
 	});
 	
-	let owner_column_width = column_widths.user + 1 + column_widths.group;
-	let max_name_width = cols.saturating_sub(2 + file_size::COLUMN_WIDTH + 2 + date_time::COLUMN_WIDTH + 2 + owner_column_width + 2 + file_permissions::COLUMN_WIDTH);
+	let owner_column_width_padded = column_widths.user.saturating_add(1).saturating_add(column_widths.group).saturating_add(2);
+	let max_name_column_width = cols.saturating_sub(2 + file_size::COLUMN_WIDTH + 2 + date_time::COLUMN_WIDTH + 2 + file_permissions::COLUMN_WIDTH).saturating_sub(owner_column_width_padded);
 	
-	column_widths.name = min(column_widths.name, max_name_width);
+	column_widths.name = min(column_widths.name, max_name_column_width);
 	column_widths
 }
 
@@ -136,6 +136,7 @@ impl<'a> NodeRow<'a> {
 		};
 	}
 	
+	#[allow(clippy::trivially_copy_pass_by_ref)]
 	fn render(&self, buf: &mut Buffer, y: u16, column_widths: &ColumnWidths, file_owner_name_cache: &mut FileOwnerNameCache) {
 		let entry = self.entry;
 		
@@ -143,38 +144,43 @@ impl<'a> NodeRow<'a> {
 		let mut x = 0;
 		
 		file_name::print(buf, x, y, entry, self.level, column_widths.name, self.is_selected);
-		x += column_widths.name + 2;
+		x = x.saturating_add(column_widths.name).saturating_add(2);
 		
-		if x + file_size::COLUMN_WIDTH > width {
+		if exceeds_width(x, file_size::COLUMN_WIDTH, width) {
 			return;
 		}
 		
 		file_size::print(buf, x, y, if let FileKind::File { size } = entry.kind() { Some(*size) } else { None });
-		x += file_size::COLUMN_WIDTH + 2;
+		x = x.saturating_add(file_size::COLUMN_WIDTH).saturating_add(2);
 		
-		if x + date_time::COLUMN_WIDTH > width {
+		if exceeds_width(x, date_time::COLUMN_WIDTH, width) {
 			return;
 		}
 		
 		date_time::print(buf, x, y, entry.modified_time());
-		x += date_time::COLUMN_WIDTH + 2;
+		x = x.saturating_add(date_time::COLUMN_WIDTH).saturating_add(2);
 		
-		if x + column_widths.user + 1 + column_widths.group > width {
+		if exceeds_width(x, column_widths.user.saturating_add(1).saturating_add(column_widths.group), width) {
 			return;
 		}
 		
 		file_owner::print(buf, x, y, file_owner_name_cache.get_user(entry.uid()), column_widths.user);
-		x += column_widths.user + 1;
+		x = x.saturating_add(column_widths.user).saturating_add(1);
 		
 		file_owner::print(buf, x, y, file_owner_name_cache.get_group(entry.gid()), column_widths.group);
-		x += column_widths.group + 2;
+		x = x.saturating_add(column_widths.group).saturating_add(2);
 		
-		if x + file_permissions::COLUMN_WIDTH > width {
+		if exceeds_width(x, file_permissions::COLUMN_WIDTH, width) {
 			return;
 		}
 		
 		file_permissions::print(buf, x, y, entry.kind(), entry.mode());
 	}
+}
+
+fn exceeds_width(x: u16, column_width: u16, terminal_width: u16) -> bool {
+	let x = x.checked_add(column_width);
+	x.is_none() || x.is_some_and(|x| x > terminal_width)
 }
 
 fn get_node_level<T>(node: &NodeRef<T>) -> usize {

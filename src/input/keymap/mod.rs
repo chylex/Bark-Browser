@@ -19,7 +19,7 @@ impl<V> KeyMap<V> {
 		Self { keybinds: HashMap::new() }
 	}
 	
-	fn insert_sequence(&mut self, key_sequence: Vec<KeyBinding>, value: V) -> Result<(), KeyMapInsertErrorType> {
+	fn insert_sequence(&mut self, key_sequence: &[KeyBinding], value: V) -> Result<(), KeyMapInsertErrorType> {
 		let mut map = self;
 		let mut iter = key_sequence.iter().peekable();
 		
@@ -27,7 +27,7 @@ impl<V> KeyMap<V> {
 			if iter.peek().is_none() {
 				map.keybinds.insert(*key, KeyMapTrieNode::Leaf(value));
 				return Ok(());
-			} else if let KeyMapTrieNode::SubTree(ref mut nested) = map.keybinds.entry(*key).or_insert_with(|| KeyMapTrieNode::SubTree(KeyMap::new())) {
+			} else if let KeyMapTrieNode::SubTree(ref mut nested) = map.keybinds.entry(*key).or_insert_with(|| KeyMapTrieNode::SubTree(Self::new())) {
 				map = nested;
 			} else {
 				return Err(KeyMapInsertErrorType::ConflictingKeySequence);
@@ -41,11 +41,11 @@ impl<V> KeyMap<V> {
 		let mut parser = KeySequenceParser::new(key_sequence_str);
 		let mut sequence = Vec::new();
 		
-		while let Some(key) = parser.next().map_err(|err| KeyMapInsertError::new(key_sequence_str.to_string(), KeyMapInsertErrorType::ParseError(err)))? {
+		while let Some(key) = parser.next().map_err(|err| KeyMapInsertError::new(key_sequence_str.to_owned(), KeyMapInsertErrorType::ParseError(err)))? {
 			sequence.push(key);
 		}
 		
-		self.insert_sequence(sequence, value).map_err(|err| KeyMapInsertError::new(key_sequence_str.to_string(), err))
+		self.insert_sequence(&sequence, value).map_err(|err| KeyMapInsertError::new(key_sequence_str.to_owned(), err))
 	}
 	
 	pub fn lookup(&self, key_sequence: &[KeyBinding]) -> KeyMapLookupResult<&V> {
@@ -86,7 +86,7 @@ pub struct KeyMapInsertError {
 }
 
 impl KeyMapInsertError {
-	fn new(sequence: String, error: KeyMapInsertErrorType) -> Self {
+	const fn new(sequence: String, error: KeyMapInsertErrorType) -> Self {
 		Self { sequence, error }
 	}
 	
@@ -94,7 +94,7 @@ impl KeyMapInsertError {
 		&self.sequence
 	}
 	
-	pub fn error(&self) -> &KeyMapInsertErrorType {
+	pub const fn error(&self) -> &KeyMapInsertErrorType {
 		&self.error
 	}
 }
@@ -109,9 +109,9 @@ pub enum KeyMapInsertErrorType {
 impl Display for KeyMapInsertErrorType {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
-			KeyMapInsertErrorType::EmptyKeySequence => write!(f, "Empty key sequence."),
-			KeyMapInsertErrorType::ConflictingKeySequence => write!(f, "Conflicting key sequence."),
-			KeyMapInsertErrorType::ParseError(err) => write!(f, "Parse error: {}", err),
+			Self::EmptyKeySequence => write!(f, "Empty key sequence."),
+			Self::ConflictingKeySequence => write!(f, "Conflicting key sequence."),
+			Self::ParseError(err) => write!(f, "Parse error: {err}"),
 		}
 	}
 }

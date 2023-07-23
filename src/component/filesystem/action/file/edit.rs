@@ -11,6 +11,7 @@ use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLay
 use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
+use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 
@@ -19,8 +20,8 @@ pub struct EditSelected;
 impl Action<FsLayer> for EditSelected {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(node) = layer.selected_node() {
-			if let Some(entry_path) = layer.tree.get_entry(&node).and_then(|entry| entry.path()) {
-				return edit_impl(layer, node, entry_path);
+			if let Some(entry_path) = layer.tree.get_entry(&node).and_then(FileEntry::path) {
+				return edit_impl(layer, &node, entry_path);
 			}
 		}
 		
@@ -28,7 +29,7 @@ impl Action<FsLayer> for EditSelected {
 	}
 }
 
-fn edit_impl(layer: &FsLayer, node: NodeRef<FsTreeViewNode>, path: &Path) -> ActionResult {
+fn edit_impl(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &Path) -> ActionResult {
 	let editor = get_editor();
 	let status = Command::new(&editor)
 		.arg(path)

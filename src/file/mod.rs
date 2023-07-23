@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use lazy_static::lazy_static;
 
 pub use crate::file::kind::FileKind;
-pub use crate::file::mode::{FileMode, Permission, PermissionClassMode};
+pub use crate::file::mode::{FileMode, Permission};
 pub use crate::file::name::FileName;
 pub use crate::file::owner::{FileOwner, FileOwnerName, FileOwnerNameCache};
 
@@ -59,27 +59,27 @@ impl FileEntry {
 		self.path.as_deref()
 	}
 	
-	pub fn name(&self) -> &FileName {
+	pub const fn name(&self) -> &FileName {
 		&self.name
 	}
 	
-	pub fn kind(&self) -> &FileKind {
+	pub const fn kind(&self) -> &FileKind {
 		&self.kind
 	}
 	
-	pub fn mode(&self) -> &FileMode {
-		&self.mode
+	pub const fn mode(&self) -> FileMode {
+		self.mode
 	}
 	
 	pub fn uid(&self) -> Option<u32> {
-		self.owner.as_ref().map(FileOwner::uid)
+		self.owner.map(FileOwner::uid)
 	}
 	
 	pub fn gid(&self) -> Option<u32> {
-		self.owner.as_ref().map(FileOwner::gid)
+		self.owner.map(FileOwner::gid)
 	}
 	
-	pub fn modified_time(&self) -> Option<&SystemTime> {
+	pub const fn modified_time(&self) -> Option<&SystemTime> {
 		self.mtime.as_ref()
 	}
 }
@@ -99,7 +99,7 @@ impl From<&Path> for FileEntry {
 		let name = if path == Path::new("/") {
 			FileName::from("/")
 		} else {
-			path.file_name().map(OsStr::to_os_string).map(FileName::from).unwrap_or_else(FileName::dummy)
+			path.file_name().map(OsStr::to_os_string).map_or_else(FileName::dummy, FileName::from)
 		};
 		
 		let metadata = path.metadata();

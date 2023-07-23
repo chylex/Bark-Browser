@@ -9,7 +9,7 @@ pub fn print(buf: &mut Buffer, x: u16, y: u16, entry: &FileEntry, level: usize, 
 	column::print_fixed_width_cell(buf, x, y, column_width, vec![
 		Span::styled(" ".repeat(level), Style::default()),
 		Span::styled(entry.name().str(), get_style(entry, is_selected)),
-	])
+	]);
 }
 
 fn get_style(entry: &FileEntry, is_selected: bool) -> Style {
@@ -40,6 +40,6 @@ fn get_color(entry: &FileEntry) -> Color {
 		FileKind::CharDevice |
 		FileKind::Pipe => Color::LightYellow,
 		
-		_ => Color::White,
+		FileKind::Unknown => Color::White,
 	}
 }

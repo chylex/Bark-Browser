@@ -11,11 +11,11 @@ pub struct FileOwner {
 }
 
 impl FileOwner {
-	pub fn uid(&self) -> u32 {
+	pub const fn uid(self) -> u32 {
 		self.uid
 	}
 	
-	pub fn gid(&self) -> u32 {
+	pub const fn gid(self) -> u32 {
 		self.gid
 	}
 }

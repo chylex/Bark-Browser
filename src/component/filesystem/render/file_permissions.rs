@@ -1,3 +1,5 @@
+#![allow(clippy::arithmetic_side_effects)]
+
 use ratatui::buffer::Buffer;
 use ratatui::style::Color;
 
@@ -10,7 +12,7 @@ const READ_BIT_COLOR: Color = Color::LightBlue;
 const WRITE_BIT_COLOR: Color = Color::LightRed;
 const EXECUTE_BIT_COLOR: Color = Color::LightGreen;
 
-pub fn print(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind, mode: &FileMode) {
+pub fn print(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind, mode: FileMode) {
 	print_kind(buf, x, y, kind);
 	
 	let user = mode.user();
@@ -58,15 +60,15 @@ fn print_permission(buf: &mut Buffer, x: u16, y: u16, permission: Permission, c:
 		}
 	};
 	
-	print_char(buf, x, y, c, color)
+	print_char(buf, x, y, c, color);
 }
 
 fn print_permission_or_special(buf: &mut Buffer, x: u16, y: u16, permission: Permission, special: Option<bool>, permission_only_char: char, special_only_char: char, permission_and_special_char: char, color: Color) {
 	if special == Some(true) {
 		let char = if permission == Permission::Yes { permission_and_special_char } else { special_only_char };
-		print_char(buf, x, y, char, color)
+		print_char(buf, x, y, char, color);
 	} else {
-		print_permission(buf, x, y, permission, permission_only_char, color)
+		print_permission(buf, x, y, permission, permission_only_char, color);
 	}
 }
 

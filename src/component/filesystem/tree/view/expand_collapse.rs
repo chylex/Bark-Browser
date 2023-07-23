@@ -4,32 +4,17 @@ use crate::component::filesystem::tree::{FsTreeModel, FsTreeView, FsTreeViewNode
 
 impl FsTreeView {
 	pub fn expand(&mut self, view_node_id: NodeId, model: &mut FsTreeModel) -> bool {
-		return if let Some(mut node) = self.get_mut(view_node_id) {
-			expand(&mut node, model)
-		} else {
-			false
-		};
+		self.get_mut(view_node_id).map(|mut node| expand(&mut node, model)).unwrap_or(false)
 	}
 	
 	pub fn collapse(&mut self, view_node_id: NodeId) -> bool {
-		return if let Some(mut node) = self.get_mut(view_node_id) {
-			collapse(&mut node)
-		} else {
-			false
-		};
+		self.get_mut(view_node_id).map(|mut node| collapse(&mut node)).unwrap_or(false)
 	}
 	
 	pub fn expand_or_collapse(&mut self, view_node_id: NodeId, model: &mut FsTreeModel) -> bool {
-		if let Some(mut node) = self.get_mut(view_node_id) {
-			if node.data().is_expanded() {
-				collapse(&mut node)
-			} else {
-				expand(&mut node, model)
-			}
-		} else {
-			false
-		}
+		self.get_mut(view_node_id).map(|mut node| expand_or_collapse(&mut node, model)).unwrap_or(false)
 	}
+	
 }
 
 pub fn expand(node: &mut NodeMut<FsTreeViewNode>, model: &mut FsTreeModel) -> bool {
@@ -63,4 +48,12 @@ pub fn collapse(node: &mut NodeMut<FsTreeViewNode>) -> bool {
 	while node.remove_first(RemoveBehavior::DropChildren).is_some() {}
 	
 	true
+}
+
+fn expand_or_collapse(node: &mut NodeMut<FsTreeViewNode>, model: &mut FsTreeModel) -> bool {
+	if node.data().is_expanded() {
+		collapse(node)
+	} else {
+		expand(node, model)
+	}
 }

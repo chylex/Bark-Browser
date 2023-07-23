@@ -96,7 +96,7 @@ impl Layer for FsLayer {
 			event.handle(self);
 		}
 		
-		render::render(self, frame)
+		render::render(self, frame);
 	}
 }
 

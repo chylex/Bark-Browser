@@ -24,7 +24,7 @@ pub struct MessageDialogLayer<'a> {
 impl<'a> MessageDialogLayer<'a> {
 	pub fn new<T, M, A>(color: Color, title: T, message: M, actions: A) -> Self where T: Into<Line<'a>>, M: Into<Text<'a>>, A: MessageDialogActions<'a> + 'a {
 		let mut message = message.into();
-		message.lines.push(Line::from(actions.describe().to_vec()).alignment(Alignment::Right));
+		message.lines.push(Line::from(actions.describe().clone()).alignment(Alignment::Right));
 		
 		let title = title.into();
 		let actions = Box::new(actions);

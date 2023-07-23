@@ -3,7 +3,7 @@ pub struct FsTreeRegisters {
 }
 
 impl FsTreeRegisters {
-	pub fn new() -> Self {
+	pub const fn new() -> Self {
 		Self {
 			count: None,
 		}

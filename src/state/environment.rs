@@ -13,7 +13,7 @@ impl TryFrom<&View> for Environment {
 	fn try_from(view: &View) -> Result<Self, Self::Error> {
 		let size = view.size()?;
 		
-		Ok(Environment {
+		Ok(Self {
 			terminal_width: size.width,
 			terminal_height: size.height,
 		})

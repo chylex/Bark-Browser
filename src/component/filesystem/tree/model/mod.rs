@@ -21,7 +21,7 @@ impl FsTreeModel {
 		Self { inner, root_id }
 	}
 	
-	pub fn root_id(&self) -> NodeId {
+	pub const fn root_id(&self) -> NodeId {
 		self.root_id
 	}
 	

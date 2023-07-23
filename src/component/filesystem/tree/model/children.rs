@@ -50,8 +50,7 @@ impl FsTreeModel {
 	}
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn read_entry(entry: io::Result<DirEntry>) -> FileEntry {
-	entry.as_ref()
-	     .map(FileEntry::from)
-	     .unwrap_or_else(|_| FileEntry::dummy())
+	entry.as_ref().ok().map_or_else(FileEntry::dummy, FileEntry::from)
 }

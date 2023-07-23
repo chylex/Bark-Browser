@@ -1,5 +1,6 @@
 use std::{fs, io};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::rc::Rc;
 
 use ratatui::style::Color;
 use slab_tree::NodeId;
@@ -34,17 +35,17 @@ fn create_impl<F>(layer: &mut FsLayer, kind: &'static str, create_function: F) -
 			let parent_folder_path;
 			let parent_node_id;
 			
-			if let FileKind::Directory = selected_node_entry.kind() {
+			if matches!(selected_node_entry.kind(), FileKind::Directory) {
 				parent_folder_path = selected_node_entry.path();
 				parent_node_id = Some(selected_node.node_id());
 			} else {
-				parent_folder_path = selected_node_entry.path().and_then(|path| path.parent());
+				parent_folder_path = selected_node_entry.path().and_then(Path::parent);
 				parent_node_id = selected_node.parent().map(|parent| parent.node_id());
 			};
 			
 			if let Some(parent_folder_path) = parent_folder_path {
 				if let Some(parent_node_id) = parent_node_id {
-					return ActionResult::PushLayer(Box::new(create_prompt(kind, parent_folder_path.to_path_buf(), create_function, layer.pending_events.clone(), parent_node_id)));
+					return ActionResult::PushLayer(Box::new(create_prompt(kind, parent_folder_path.to_path_buf(), create_function, Rc::clone(&layer.pending_events), parent_node_id)));
 				}
 			}
 		}
@@ -62,7 +63,8 @@ fn create_prompt<F>(kind: &'static str, parent_folder: PathBuf, create_function:
 		let file_path = parent_folder.join(file_name);
 		
 		if file_path.exists() {
-			return ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("File or directory {} already exists.", file_path.to_string_lossy()), MessageDialogActionMap::ok())));
+			let file_path = file_path.to_string_lossy();
+			return ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("File or directory {file_path} already exists."), MessageDialogActionMap::ok())));
 		}
 		
 		match create_function(file_path) {
@@ -71,7 +73,7 @@ fn create_prompt<F>(kind: &'static str, parent_folder: PathBuf, create_function:
 				ActionResult::PopLayer
 			}
 			Err(e) => {
-				ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("Could not create {}: {}", kind, e), MessageDialogActionMap::ok())))
+				ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("Could not create {kind}: {e}"), MessageDialogActionMap::ok())))
 			}
 		}
 	}))

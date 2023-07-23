@@ -17,7 +17,7 @@ pub struct MoveOrTraverseUpParent;
 
 impl MovementAction for MoveOrTraverseUpParent {
 	fn get_target(&self, layer: &mut FsLayer, _environment: &Environment) -> Option<NodeId> where Self: Sized {
-		Some(perform_movement_with_count(layer, layer.registers.count, MoveOrTraverseUpParent::get_target))
+		Some(perform_movement_with_count(layer, layer.registers.count, Self::get_target))
 	}
 }
 

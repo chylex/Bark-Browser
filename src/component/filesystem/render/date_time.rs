@@ -1,3 +1,5 @@
+#![allow(clippy::arithmetic_side_effects)]
+
 use std::time::SystemTime;
 
 use chrono::{Datelike, DateTime, Local, Timelike, Utc};

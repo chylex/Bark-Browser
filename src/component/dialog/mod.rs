@@ -21,7 +21,7 @@ fn calculate_margin_area(frame: &mut F, content_width: u16, content_height: u16)
 	let x = 0;
 	let width = min(content_width.saturating_add((MARGIN_HORIZONTAL * 2) + 2 + (PADDING_HORIZONTAL * 2)), frame_size.width);
 	let height = min(content_height.saturating_add((MARGIN_VERTICAL * 2) + 2 + (PADDING_VERTICAL * 2)), frame_size.height);
-	let y = (frame_size.height - height) / 2;
+	let y = frame_size.height.saturating_sub(height) / 2;
 	
 	Rect { x, y, width, height }
 }

@@ -15,7 +15,7 @@ pub trait MovementCount {
 	fn get_count(&self, original_count: Option<usize>, environment: &Environment) -> usize;
 }
 
-/// Utility trait for creating movement actions with a custom count out of [SimpleMovementAction] implementations.
+/// Utility trait for creating movement actions with a custom count out of [`SimpleMovementAction`] implementations.
 pub trait MovementWithCountFactory<A: SimpleMovementAction + 'static, C: MovementCount> {
 	/// Creates a movement action that always uses a custom count.
 	fn with_custom_count(self, count: C) -> MovementWithCount<A, C>;
@@ -56,7 +56,8 @@ pub struct ScreenHeightRatio(pub usize);
 impl MovementCount for ScreenHeightRatio {
 	fn get_count(&self, original_count: Option<usize>, environment: &Environment) -> usize {
 		let terminal_height = environment.terminal_height as usize;
+		#[allow(clippy::arithmetic_side_effects)] // The divisor is a non-zero constant.
 		let height_ratio = terminal_height / self.0;
-		original_count.unwrap_or(1) * (height_ratio)
+		original_count.unwrap_or(1).saturating_mul(height_ratio)
 	}
 }

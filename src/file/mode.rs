@@ -7,47 +7,50 @@ pub enum FileMode {
 }
 
 impl FileMode {
-	pub fn user(&self) -> PermissionClassMode {
+	pub fn user(self) -> PermissionClassMode {
 		self.get_class(2)
 	}
 	
-	pub fn group(&self) -> PermissionClassMode {
+	pub fn group(self) -> PermissionClassMode {
 		self.get_class(1)
 	}
 	
-	pub fn others(&self) -> PermissionClassMode {
+	pub fn others(self) -> PermissionClassMode {
 		self.get_class(0)
 	}
 	
-	pub fn is_executable_by_any(&self) -> Option<bool> {
+	pub fn is_executable_by_any(self) -> Option<bool> {
 		self.get_bits(0, 0b_001_001_001).map(|b| b != 0)
 	}
 	
-	pub fn is_setuid(&self) -> Option<bool> {
+	pub fn is_setuid(self) -> Option<bool> {
 		self.get_bit(11)
 	}
 	
-	pub fn is_setgid(&self) -> Option<bool> {
+	pub fn is_setgid(self) -> Option<bool> {
 		self.get_bit(10)
 	}
 	
-	pub fn is_sticky(&self) -> Option<bool> {
+	pub fn is_sticky(self) -> Option<bool> {
 		self.get_bit(9)
 	}
 	
-	fn get_class(&self, group_index: u8) -> PermissionClassMode {
+	fn get_class(self, group_index: u8) -> PermissionClassMode {
+		#[allow(clippy::arithmetic_side_effects)] // Only used with constants where overflow is impossible.
 		PermissionClassMode::from(self.get_bits(group_index * 3, 0b111))
 	}
 	
-	fn get_bit(&self, bit_index: u8) -> Option<bool> {
+	fn get_bit(self, bit_index: u8) -> Option<bool> {
 		self.get_bits(bit_index, 1).map(|b| b != 0)
 	}
 	
-	fn get_bits(&self, shift: u8, mask: u8) -> Option<u8> {
-		if let FileMode::Known(mode) = self {
+	const fn get_bits(self, shift: u8, mask: u8) -> Option<u8> {
+		if let Self::Known(mode) = self {
 			let shift32 = shift as u32;
 			let mask32 = mask as u32;
-			Some(((*mode >> shift32) & mask32) as u8)
+			let bits = (mode >> shift32) & mask32;
+			#[allow(clippy::cast_possible_truncation)] // All bits above u8 are already masked out.
+			Some(bits as u8)
 		} else {
 			None
 		}
@@ -75,9 +78,9 @@ pub enum PermissionClassMode {
 }
 
 impl PermissionClassMode {
-	fn test_permission(&self, mask: u8) -> Permission {
-		if let PermissionClassMode::Known(mode) = self {
-			if mode & mask != 0 {
+	const fn test_permission(self, mask: u8) -> Permission {
+		if let Self::Known(mode) = self {
+			if Self::has_bit(mode, mask) {
 				Permission::Yes
 			} else {
 				Permission::No
@@ -87,26 +90,26 @@ impl PermissionClassMode {
 		}
 	}
 	
-	pub fn read(&self) -> Permission {
+	const fn has_bit(mode: u8, mask: u8) -> bool {
+		mode & mask != 0
+	}
+	
+	pub const fn read(self) -> Permission {
 		self.test_permission(0b100)
 	}
 	
-	pub fn write(&self) -> Permission {
+	pub const fn write(self) -> Permission {
 		self.test_permission(0b010)
 	}
 	
-	pub fn execute(&self) -> Permission {
+	pub const fn execute(self) -> Permission {
 		self.test_permission(0b001)
 	}
 }
 
 impl From<Option<u8>> for PermissionClassMode {
 	fn from(mode: Option<u8>) -> Self {
-		if let Some(mode) = mode {
-			Self::Known(mode)
-		} else {
-			Self::Unknown
-		}
+		mode.map_or(Self::Unknown, Self::Known)
 	}
 }
 

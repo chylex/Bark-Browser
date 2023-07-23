@@ -36,7 +36,7 @@ impl State {
 	}
 	
 	pub fn render(&mut self, frame: &mut F) {
-		for layer in self.layers.iter_mut() {
+		for layer in &mut self.layers {
 			layer.render(frame);
 		}
 	}

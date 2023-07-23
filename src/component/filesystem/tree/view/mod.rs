@@ -21,7 +21,7 @@ impl FsTreeView {
 		Self { inner, root_id }
 	}
 	
-	pub fn root_id(&self) -> NodeId {
+	pub const fn root_id(&self) -> NodeId {
 		self.root_id
 	}
 	
@@ -56,15 +56,15 @@ pub struct FsTreeViewNode {
 }
 
 impl FsTreeViewNode {
-	pub fn from_model_node_id(model_node_id: NodeId) -> Self {
+	pub const fn from_model_node_id(model_node_id: NodeId) -> Self {
 		Self { model_node_id, is_expanded: false }
 	}
 	
-	pub fn model_node_id(&self) -> NodeId {
+	pub const fn model_node_id(&self) -> NodeId {
 		self.model_node_id
 	}
 	
-	pub fn is_expanded(&self) -> bool {
+	pub const fn is_expanded(&self) -> bool {
 		self.is_expanded
 	}
 }

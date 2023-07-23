@@ -24,6 +24,7 @@ impl InputFieldLayer {
 }
 
 impl Layer for InputFieldLayer {
+	#[allow(clippy::wildcard_enum_match_arm)]
 	fn handle_input(&mut self, _environment: &Environment, key_binding: KeyBinding) -> ActionResult {
 		match key_binding.code() {
 			KeyCode::Esc => {
@@ -60,7 +61,7 @@ impl Layer for InputFieldLayer {
 	
 	fn render(&mut self, frame: &mut F) {
 		let size = frame.size();
-		let area = Rect::new(size.x, size.bottom() - 1, size.width, 1);
+		let area = Rect::new(size.x, size.bottom().saturating_sub(1), size.width, 1);
 		
 		let text = Text::from(self.text.clone());
 		let text_width = u16::try_from(text.width()).unwrap_or(u16::MAX);

@@ -8,7 +8,7 @@ pub struct FileName {
 
 impl FileName {
 	pub fn dummy() -> Self {
-		FileName::from("???")
+		Self::from("???")
 	}
 	
 	pub fn str(&self) -> &str {
@@ -29,7 +29,7 @@ impl From<&str> for FileName {
 	fn from(value: &str) -> Self {
 		Self {
 			os: None,
-			str: value.to_string(),
+			str: value.to_owned(),
 		}
 	}
 }

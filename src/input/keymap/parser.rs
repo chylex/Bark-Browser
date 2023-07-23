@@ -63,6 +63,7 @@ impl<'a> KeySequenceParser<'a> {
 	}
 }
 
+#[allow(clippy::match_same_arms)]
 fn parse_key_name(key: &str) -> Result<KeyCode, ParseError> {
 	match key {
 		"BS" => Ok(KeyCode::Backspace),
@@ -98,11 +99,10 @@ fn parse_key_name(key: &str) -> Result<KeyCode, ParseError> {
 		"Up" => Ok(KeyCode::Up),
 		
 		_ => {
-			let chars = key.chars().collect::<Vec<_>>();
-			if chars.len() == 1 {
-				Ok(KeyCode::Char(chars[0].to_ascii_lowercase()))
+			if let &[char] = key.chars().collect::<Vec<_>>().as_slice() {
+				Ok(KeyCode::Char(char.to_ascii_lowercase()))
 			} else {
-				Err(ParseError::InvalidKeyName(key.to_string()))
+				Err(ParseError::InvalidKeyName(key.to_owned()))
 			}
 		},
 	}
@@ -119,10 +119,10 @@ pub enum ParseError {
 impl Display for ParseError {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
-			ParseError::InvalidKeyName(key) => write!(f, "Invalid key name: {}", key),
-			ParseError::InvalidModifier(modifier) => write!(f, "Invalid modifier: {}", modifier),
-			ParseError::CannotCombineShiftModifierWithCharacter => f.write_str("Cannot combine shift modifier with character."),
-			ParseError::MissingClosingAngledBracket => f.write_str("Missing closing angled bracket."),
+			Self::InvalidKeyName(key) => write!(f, "Invalid key name: {key}"),
+			Self::InvalidModifier(modifier) => write!(f, "Invalid modifier: {modifier}"),
+			Self::CannotCombineShiftModifierWithCharacter => write!(f, "Cannot combine shift modifier with character."),
+			Self::MissingClosingAngledBracket => write!(f, "Missing closing angled bracket."),
 		}
 	}
 }

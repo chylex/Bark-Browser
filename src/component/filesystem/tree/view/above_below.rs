@@ -11,6 +11,7 @@ impl FsTreeView {
 		}
 	}
 	
+	#[allow(clippy::unused_self)]
 	pub fn get_node_below(&self, node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
 		if let Some(next) = node.first_child() {
 			Some(next.node_id())

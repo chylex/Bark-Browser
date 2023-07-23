@@ -4,21 +4,21 @@ pub trait IntegerLength {
 
 impl IntegerLength for u64 {
 	fn int_len(self) -> usize {
-		(self.checked_ilog10().unwrap_or(0) + 1) as usize
+		self.checked_ilog10().unwrap_or(0).saturating_add(1) as usize
 	}
 }
 
 impl IntegerLength for u32 {
 	fn int_len(self) -> usize {
-		(self.checked_ilog10().unwrap_or(0) + 1) as usize
+		self.checked_ilog10().unwrap_or(0).saturating_add(1) as usize
 	}
 }
 
 impl IntegerLength for i32 {
 	fn int_len(self) -> usize {
-		let digit_count = self.abs().checked_ilog10().unwrap_or(1) + 1;
 		let sign_len = if self < 0 { 1 } else { 0 };
-		(digit_count + sign_len) as usize
+		let digit_count = self.abs().checked_ilog10().unwrap_or(1).saturating_add(1);
+		digit_count.saturating_add(sign_len) as usize
 	}
 }
 

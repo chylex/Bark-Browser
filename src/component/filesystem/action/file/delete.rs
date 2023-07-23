@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::rc::Rc;
 
 use ratatui::style::Color;
 use slab_tree::NodeId;
@@ -16,7 +17,7 @@ impl Action<FsLayer> for DeleteSelected {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(view_node_to_delete) = layer.selected_node() {
 			if let Some(entry_to_delete) = layer.tree.get_entry(&view_node_to_delete) {
-				if let Some(dialog) = create_confirmation_dialog(entry_to_delete, layer.pending_events.clone(), view_node_to_delete.node_id()) {
+				if let Some(dialog) = create_confirmation_dialog(entry_to_delete, Rc::clone(&layer.pending_events), view_node_to_delete.node_id()) {
 					return ActionResult::PushLayer(Box::new(dialog));
 				}
 			}
