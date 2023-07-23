@@ -5,6 +5,7 @@ use std::rc::Rc;
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::event::FsLayerPendingEvents;
+use crate::component::filesystem::registers::FsTreeRegisters;
 use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::FileOwnerNameCache;
 use crate::input::keymap::{KeyBinding, KeyMapLookupResult};
@@ -17,10 +18,12 @@ mod action;
 mod event;
 mod render;
 mod tree;
+mod registers;
 
 pub struct FsLayer {
 	pub tree: FsTree,
 	pub selected_view_node_id: NodeId,
+	pub registers: FsTreeRegisters,
 	pending_keys: Vec<KeyBinding>,
 	pending_events: FsLayerPendingEvents,
 	file_owner_name_cache: FileOwnerNameCache,
@@ -40,6 +43,7 @@ impl FsLayer {
 		Self {
 			tree,
 			selected_view_node_id: root_id,
+			registers: FsTreeRegisters::new(),
 			pending_keys: Vec::new(),
 			pending_events: Rc::new(RefCell::new(Vec::new())),
 			file_owner_name_cache: FileOwnerNameCache::new(),
@@ -67,11 +71,21 @@ impl Layer for FsLayer {
 			
 			KeyMapLookupResult::Found(action) => {
 				self.pending_keys.clear();
-				action.perform(self, environment)
+				
+				let old_count = self.registers.count;
+				let result = action.perform(self, environment);
+				
+				// Reset count after every action, unless the action modified it.
+				if old_count == self.registers.count {
+					self.registers.count = None;
+				}
+				
+				result
 			}
 			
 			KeyMapLookupResult::None => {
 				self.pending_keys.clear();
+				self.registers.count = None;
 				ActionResult::Nothing
 			}
 		}

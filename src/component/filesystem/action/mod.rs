@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 
+use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
 use crate::component::filesystem::action::movement::{HeightRatio, MoveDown, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp, RepeatMovement};
 use crate::component::filesystem::action::quit::Quit;
@@ -8,6 +9,7 @@ use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyMap;
 use crate::state::action::Action;
 
+mod count;
 mod quit;
 pub mod file;
 pub mod movement;
@@ -21,6 +23,17 @@ lazy_static! {
 
 fn create_action_map() -> ActionKeyMap {
 	let mut me = ActionKeyMap::new();
+	
+	map(&mut me, "0", PushCountDigit(0));
+	map(&mut me, "1", PushCountDigit(1));
+	map(&mut me, "2", PushCountDigit(2));
+	map(&mut me, "3", PushCountDigit(3));
+	map(&mut me, "4", PushCountDigit(4));
+	map(&mut me, "5", PushCountDigit(5));
+	map(&mut me, "6", PushCountDigit(6));
+	map(&mut me, "7", PushCountDigit(7));
+	map(&mut me, "8", PushCountDigit(8));
+	map(&mut me, "9", PushCountDigit(9));
 	
 	map(&mut me, " ", ExpandCollapse);
 	map(&mut me, "e", EditSelected);
