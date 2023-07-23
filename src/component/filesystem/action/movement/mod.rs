@@ -7,16 +7,19 @@ use crate::state::Environment;
 
 pub use self::custom_count::MovementWithCountFactory;
 pub use self::custom_count::ScreenHeightRatio;
+pub use self::line_based::MoveDown;
+pub use self::line_based::MoveToFirst;
+pub use self::line_based::MoveToLast;
+pub use self::line_based::MoveToLineOr;
+pub use self::line_based::MoveUp;
 pub use self::parents::MoveOrTraverseUpParent;
 pub use self::siblings::MoveToNextSibling;
 pub use self::siblings::MoveToPreviousSibling;
-pub use self::up_down::MoveDown;
-pub use self::up_down::MoveUp;
 
 mod custom_count;
 mod parents;
 mod siblings;
-mod up_down;
+mod line_based;
 
 pub trait MovementAction {
 	fn get_target(&self, layer: &mut FsLayer, environment: &Environment) -> Option<NodeId> where Self: Sized;
@@ -34,11 +37,15 @@ impl<T: MovementAction> Action<FsLayer> for T {
 }
 
 fn perform_movement_with_count<F>(layer: &mut FsLayer, count: Option<usize>, get_target: F) -> NodeId where F: Fn(&mut FsLayer, NodeId) -> Option<NodeId> {
-	let mut target_node_id = layer.selected_view_node_id;
+	perform_movement_with_count_from(layer, count, layer.selected_view_node_id, get_target)
+}
+
+fn perform_movement_with_count_from<F>(layer: &mut FsLayer, count: Option<usize>, start_node_id: NodeId, get_target: F) -> NodeId where F: Fn(&mut FsLayer, NodeId) -> Option<NodeId> {
+	let mut target_node_id = start_node_id;
 	
 	for _ in 0..count.unwrap_or(1) {
-		if let Some(id) = get_target(layer, target_node_id) {
-			target_node_id = id;
+		if let Some(node_id) = get_target(layer, target_node_id) {
+			target_node_id = node_id;
 		} else {
 			break;
 		}

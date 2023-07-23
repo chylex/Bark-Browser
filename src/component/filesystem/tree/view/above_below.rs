@@ -34,7 +34,7 @@ impl FsTreeView {
 		self.get(node_id).and_then(|node| self.get_node_below(&node))
 	}
 	
-	fn get_last_descendant_or_self(&self, id: NodeId) -> NodeId {
+	pub fn get_last_descendant_or_self(&self, id: NodeId) -> NodeId {
 		let mut id = id;
 		
 		while let Some(node_id) = self.get(id).and_then(|node| node.last_child().map(|last_child| last_child.node_id())) {

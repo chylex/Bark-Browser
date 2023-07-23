@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 
 use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
-use crate::component::filesystem::action::movement::{MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToNextSibling, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
+use crate::component::filesystem::action::movement::{MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::quit::Quit;
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
@@ -38,6 +38,8 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, " ", ExpandCollapse);
 	map(&mut me, "e", EditSelected);
 	map(&mut me, "d", DeleteSelected);
+	map(&mut me, "gg", MoveToLineOr(MoveToFirst));
+	map(&mut me, "G", MoveToLineOr(MoveToLast));
 	map(&mut me, "h", MoveOrTraverseUpParent);
 	map(&mut me, "j", MoveDown);
 	map(&mut me, "J", MoveToNextSibling);
