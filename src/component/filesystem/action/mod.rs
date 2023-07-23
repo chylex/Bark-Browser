@@ -52,13 +52,22 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "<Ctrl-C>", Quit);
 	map(&mut me, "<Ctrl-D>", MoveDown.with_default_count(ScreenHeightRatio(2)));
 	map(&mut me, "<Ctrl-F>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
+	map(&mut me, "<Ctrl-N>", MoveDown);
+	map(&mut me, "<Ctrl-P>", MoveUp);
 	map(&mut me, "<Ctrl-U>", MoveUp.with_default_count(ScreenHeightRatio(2)));
 	
 	map(&mut me, "<Down>", MoveDown);
+	map(&mut me, "<Shift-Down>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<Alt-Down>", MoveToNextSibling);
-	map(&mut me, "<Left>", MoveOrTraverseUpParent);
+	
 	map(&mut me, "<Up>", MoveUp);
+	map(&mut me, "<Shift-Up>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<Alt-Up>", MoveToPreviousSibling);
+	
+	map(&mut me, "<Left>", MoveOrTraverseUpParent);
+	
+	map(&mut me, "<PageDown>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
+	map(&mut me, "<PageUp>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
 	
 	me
 }
