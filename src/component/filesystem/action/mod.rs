@@ -35,7 +35,6 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "8", PushCountDigit(8));
 	map(&mut me, "9", PushCountDigit(9));
 	
-	map(&mut me, " ", ExpandCollapse);
 	map(&mut me, "e", EditSelected);
 	map(&mut me, "d", DeleteSelected);
 	map(&mut me, "gg", MoveToLineOr(MoveToFirst));
@@ -57,6 +56,9 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "<Ctrl-N>", MoveDown);
 	map(&mut me, "<Ctrl-P>", MoveUp);
 	map(&mut me, "<Ctrl-U>", MoveUp.with_default_count(ScreenHeightRatio(2)));
+	
+	map(&mut me, "<Space>", ExpandCollapse { default_depth: 1 });
+	map(&mut me, "<Ctrl-Space>", ExpandCollapse { default_depth: 1000 });
 	
 	map(&mut me, "<Down>", MoveDown);
 	map(&mut me, "<Shift-Down>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
