@@ -1,16 +1,16 @@
 use lazy_static::lazy_static;
 
+use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
 use crate::component::filesystem::action::movement::{MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
-use crate::component::filesystem::action::quit::Quit;
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyMap;
 use crate::state::action::Action;
 
+mod application;
 mod count;
-mod quit;
 pub mod file;
 pub mod movement;
 pub mod tree;
@@ -53,6 +53,7 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "<Ctrl-C>", Quit);
 	map(&mut me, "<Ctrl-D>", MoveDown.with_default_count(ScreenHeightRatio(2)));
 	map(&mut me, "<Ctrl-F>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
+	map(&mut me, "<Ctrl-L>", RedrawScreen);
 	map(&mut me, "<Ctrl-N>", MoveDown);
 	map(&mut me, "<Ctrl-P>", MoveUp);
 	map(&mut me, "<Ctrl-U>", MoveUp.with_default_count(ScreenHeightRatio(2)));
