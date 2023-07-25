@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
-use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
+use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyMap;
@@ -50,6 +50,8 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "nd", CreateDirectory);
 	map(&mut me, "q", Quit);
 	map(&mut me, "r", RefreshChildrenOfSelected);
+	
+	map(&mut me, "%", MoveBetweenFirstAndLastSibling);
 	
 	map(&mut me, "<Ctrl-B>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<Ctrl-C>", Quit);

@@ -32,3 +32,15 @@ impl SimpleMovementAction for MoveToPreviousSibling {
 		selected_node.prev_sibling().or_else(|| selected_node.parent()).map(|node| node.node_id())
 	}
 }
+
+pub struct MoveBetweenFirstAndLastSibling;
+
+impl SimpleMovementAction for MoveBetweenFirstAndLastSibling {
+	fn get_target(_view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+		if selected_node.next_sibling().is_none() {
+			selected_node.parent().and_then(|node| node.first_child().map(|node| node.node_id()))
+		} else {
+			selected_node.parent().and_then(|node| node.last_child().map(|node| node.node_id()))
+		}
+	}
+}

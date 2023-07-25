@@ -16,6 +16,7 @@ pub use self::line_based::MoveToLineOr;
 pub use self::line_based::MoveUp;
 pub use self::parents::MoveOrTraverseUpParent;
 pub use self::parents::MoveToParent;
+pub use self::siblings::MoveBetweenFirstAndLastSibling;
 pub use self::siblings::MoveToNextSibling;
 pub use self::siblings::MoveToPreviousSibling;
 
