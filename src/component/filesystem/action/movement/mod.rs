@@ -9,6 +9,7 @@ pub use self::custom_count::MovementWithCountFactory;
 pub use self::custom_count::ScreenHeightRatio;
 pub use self::expand_collapse::CollapseSelectedOr;
 pub use self::expand_collapse::ExpandSelectedOr;
+pub use self::fallback::MovementWithFallbackFactory;
 pub use self::line_based::MoveDown;
 pub use self::line_based::MoveToFirst;
 pub use self::line_based::MoveToLast;
@@ -22,6 +23,7 @@ pub use self::siblings::MoveToPreviousSibling;
 
 mod custom_count;
 mod expand_collapse;
+mod fallback;
 mod line_based;
 mod parents;
 mod siblings;
