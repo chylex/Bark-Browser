@@ -7,19 +7,23 @@ use crate::state::Environment;
 
 pub use self::custom_count::MovementWithCountFactory;
 pub use self::custom_count::ScreenHeightRatio;
+pub use self::expand_collapse::CollapseSelectedOr;
+pub use self::expand_collapse::ExpandSelectedOr;
 pub use self::line_based::MoveDown;
 pub use self::line_based::MoveToFirst;
 pub use self::line_based::MoveToLast;
 pub use self::line_based::MoveToLineOr;
 pub use self::line_based::MoveUp;
 pub use self::parents::MoveOrTraverseUpParent;
+pub use self::parents::MoveToParent;
 pub use self::siblings::MoveToNextSibling;
 pub use self::siblings::MoveToPreviousSibling;
 
 mod custom_count;
+mod expand_collapse;
+mod line_based;
 mod parents;
 mod siblings;
-mod line_based;
 
 pub trait MovementAction {
 	fn get_target(&self, layer: &mut FsLayer, environment: &Environment) -> Option<NodeId> where Self: Sized;

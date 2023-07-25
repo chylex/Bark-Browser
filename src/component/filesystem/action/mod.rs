@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
-use crate::component::filesystem::action::movement::{MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
+use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyMap;
@@ -39,11 +39,13 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "d", DeleteSelected);
 	map(&mut me, "gg", MoveToLineOr(MoveToFirst));
 	map(&mut me, "G", MoveToLineOr(MoveToLast));
-	map(&mut me, "h", MoveOrTraverseUpParent);
+	map(&mut me, "h", CollapseSelectedOr(MoveToParent));
+	map(&mut me, "H", MoveOrTraverseUpParent);
 	map(&mut me, "j", MoveDown);
 	map(&mut me, "J", MoveToNextSibling);
 	map(&mut me, "k", MoveUp);
 	map(&mut me, "K", MoveToPreviousSibling);
+	map(&mut me, "l", ExpandSelectedOr(MoveDown));
 	map(&mut me, "nf", CreateFile);
 	map(&mut me, "nd", CreateDirectory);
 	map(&mut me, "q", Quit);
@@ -69,7 +71,10 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "<Shift-Up>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<Alt-Up>", MoveToPreviousSibling);
 	
-	map(&mut me, "<Left>", MoveOrTraverseUpParent);
+	map(&mut me, "<Left>", CollapseSelectedOr(MoveToParent));
+	map(&mut me, "<Alt-Left>", MoveOrTraverseUpParent);
+	
+	map(&mut me, "<Right>", ExpandSelectedOr(MoveDown));
 	
 	map(&mut me, "<PageDown>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<PageUp>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
