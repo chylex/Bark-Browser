@@ -24,7 +24,8 @@ pub fn render(layer: &mut FsLayer, frame: &mut F) {
 	let column_widths = get_or_update_column_widths(layer, size.width);
 	let file_owner_name_cache = &mut layer.file_owner_name_cache;
 	
-	let rows = collect_displayed_rows(&layer.tree, layer.selected_view_node_id, size.height as usize);
+	let (rows, cursor_y) = collect_displayed_rows(&layer.tree, layer.selected_view_node_id, size.height as usize);
+	layer.cursor_y = cursor_y;
 	
 	frame.render_widget(Clear, size);
 	frame.render_widget(FsWidget { rows, column_widths, file_owner_name_cache }, size);
@@ -58,8 +59,9 @@ fn get_or_update_column_widths(layer: &mut FsLayer, cols: u16) -> ColumnWidths {
 	column_widths
 }
 
-fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows: usize) -> Vec<NodeRow> {
+fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows: usize) -> (Vec<NodeRow>, u16) {
 	let mut displayed_rows = Vec::with_capacity(terminal_rows);
+	let mut cursor_y: u16 = 0;
 	
 	if let Some(middle_node) = tree.view.get(selected_node_id).or_else(|| tree.view.root()) {
 		let middle_node_id = middle_node.node_id();
@@ -72,6 +74,7 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 		while displayed_rows.len() < terminal_rows {
 			if let Some(next_node_up) = move_cursor(tree, &mut cursor_up_id, FsTreeView::get_node_above) {
 				displayed_rows.insert(0, NodeRow::from(&next_node_up, tree, false));
+				cursor_y = cursor_y.saturating_add(1);
 			}
 			
 			if displayed_rows.len() >= terminal_rows {
@@ -88,7 +91,7 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 		}
 	}
 	
-	displayed_rows
+	(displayed_rows, cursor_y)
 }
 
 fn move_cursor<'a, F>(tree: &'a FsTree, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, FsTreeViewNode>> where F: FnOnce(&FsTreeView, &NodeRef<FsTreeViewNode>) -> Option<NodeId> {

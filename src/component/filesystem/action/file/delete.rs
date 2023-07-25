@@ -4,7 +4,7 @@ use std::rc::Rc;
 use ratatui::style::Color;
 use slab_tree::NodeId;
 
-use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLayer};
+use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::{FsLayer, FsLayerPendingEvents};
 use crate::component::filesystem::event::FsLayerEvent;
 use crate::file::FileEntry;
@@ -17,7 +17,7 @@ impl Action<FsLayer> for DeleteSelected {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(view_node_to_delete) = layer.selected_node() {
 			if let Some(entry_to_delete) = layer.tree.get_entry(&view_node_to_delete) {
-				if let Some(dialog) = create_confirmation_dialog(entry_to_delete, Rc::clone(&layer.pending_events), view_node_to_delete.node_id()) {
+				if let Some(dialog) = create_confirmation_dialog(layer.dialog_y(), entry_to_delete, Rc::clone(&layer.pending_events), view_node_to_delete.node_id()) {
 					return ActionResult::PushLayer(Box::new(dialog));
 				}
 			}
@@ -27,19 +27,24 @@ impl Action<FsLayer> for DeleteSelected {
 	}
 }
 
-fn create_confirmation_dialog<'a>(entry_to_delete: &FileEntry, pending_events: FsLayerPendingEvents, view_node_id_to_delete: NodeId) -> Option<MessageDialogLayer<'a>> {
+fn create_confirmation_dialog<'a>(y: u16, entry_to_delete: &FileEntry, pending_events: FsLayerPendingEvents, view_node_id_to_delete: NodeId) -> Option<MessageDialogLayer<'a>> {
 	entry_to_delete.path().map(Path::to_path_buf).map(move |path| {
-		MessageDialogLayer::new(Color::LightRed, "Confirm Deletion", format!("Delete {}?", path.to_string_lossy()), MessageDialogActionMap::yes_no(Box::new(move || {
-			match delete_path_recursively(&path) {
-				Ok(_) => {
-					FsLayerEvent::DeleteViewNode(view_node_id_to_delete).enqueue(&pending_events);
-					ActionResult::PopLayer
+		MessageDialogLayer::build()
+			.y(y)
+			.color(Color::LightRed)
+			.title("Confirm Deletion")
+			.message(format!("Delete {}?", path.to_string_lossy()))
+			.yes_no(Box::new(move || {
+				match delete_path_recursively(&path) {
+					Ok(_) => {
+						FsLayerEvent::DeleteViewNode(view_node_id_to_delete).enqueue(&pending_events);
+						ActionResult::PopLayer
+					}
+					Err(e) => {
+						ActionResult::ReplaceLayer(Box::new(MessageDialogLayer::generic_error(y, e.to_string())))
+					}
 				}
-				Err(e) => {
-					ActionResult::ReplaceLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", e.to_string(), MessageDialogActionMap::ok())))
-				}
-			}
-		})))
+			}))
 	})
 }
 

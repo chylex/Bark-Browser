@@ -4,10 +4,9 @@ use std::io::ErrorKind;
 use std::path::Path;
 use std::process::Command;
 
-use ratatui::style::Color;
 use slab_tree::NodeRef;
 
-use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLayer};
+use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
@@ -37,7 +36,7 @@ fn edit_impl(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &Path) -> Ac
 		.status();
 	
 	if status.is_err_and(|e| e.kind() == ErrorKind::NotFound) {
-		return ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("Default editor '{}' not found.", editor.to_string_lossy()), MessageDialogActionMap::ok())));
+		return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(layer.dialog_y(), format!("Default editor '{}' not found.", editor.to_string_lossy()))));
 	}
 	
 	if let Some(parent_node_id) = node.parent_id() {

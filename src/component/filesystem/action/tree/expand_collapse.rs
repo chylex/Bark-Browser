@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use ratatui::style::Color;
 use slab_tree::NodeId;
 
-use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLayer};
+use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::FsLayer;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
@@ -26,7 +26,12 @@ impl Action<FsLayer> for ExpandCollapse {
 						let child_node_ids = node.children().map(|node| node.node_id()).collect();
 						let remaining_depth = depth.saturating_sub(1);
 						if !expand_children_to_depth(layer, child_node_ids, remaining_depth) {
-							return ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightYellow, "Expansion Stopped", format!("Expansion was taking more than {} seconds, stopping now.", MAX_EXPANSION_TIME.as_secs()), MessageDialogActionMap::ok())));
+							return ActionResult::PushLayer(Box::new(MessageDialogLayer::build()
+								.y(layer.dialog_y())
+								.color(Color::LightYellow)
+								.title("Expansion Stopped")
+								.message(format!("Expansion was taking more than {} seconds, stopping now.", MAX_EXPANSION_TIME.as_secs()))
+								.ok()));
 						}
 					}
 				}

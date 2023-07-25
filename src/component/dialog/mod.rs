@@ -15,19 +15,20 @@ const MARGIN_VERTICAL: u16 = 0;
 const PADDING_HORIZONTAL: u16 = 3;
 const PADDING_VERTICAL: u16 = 1;
 
-fn calculate_margin_area(frame: &mut F, content_width: u16, content_height: u16) -> Rect {
+fn calculate_margin_area(frame: &mut F, top_y: u16, content_width: u16, content_height: u16) -> Rect {
 	let frame_size = frame.size();
 	
-	let x = 0;
 	let width = min(content_width.saturating_add((MARGIN_HORIZONTAL * 2) + 2 + (PADDING_HORIZONTAL * 2)), frame_size.width);
 	let height = min(content_height.saturating_add((MARGIN_VERTICAL * 2) + 2 + (PADDING_VERTICAL * 2)), frame_size.height);
-	let y = frame_size.height.saturating_sub(height) / 2;
+	
+	let x = 0;
+	let y = min(top_y, frame_size.height.saturating_sub(height));
 	
 	Rect { x, y, width, height }
 }
 
-fn render_dialog_border<'a, T>(frame: &mut F, content_width: u16, content_height: u16, title: T, color: Color) -> Rect where T: Into<Line<'a>> {
-	let margin_area = calculate_margin_area(frame, content_width, content_height);
+fn render_dialog_border<'a, T>(frame: &mut F, top_y: u16, content_width: u16, content_height: u16, title: T, color: Color) -> Rect where T: Into<Line<'a>> {
+	let margin_area = calculate_margin_area(frame, top_y, content_width, content_height);
 	let border_area = margin_area.inner(&Margin { horizontal: MARGIN_HORIZONTAL, vertical: MARGIN_VERTICAL });
 	
 	let border_widget = Block::default()

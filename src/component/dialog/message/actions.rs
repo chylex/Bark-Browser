@@ -3,11 +3,15 @@ use std::collections::HashMap;
 use ratatui::style::{Color, Style};
 use ratatui::text::Span;
 
-use crate::component::dialog::message::MessageDialogActions;
 use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
 
 type ActionHashMap = HashMap<KeyBinding, Box<dyn Fn() -> ActionResult>>;
+
+pub trait MessageDialogActions<'a> {
+	fn handle_input(&mut self, key_binding: KeyBinding) -> ActionResult;
+	fn describe(&self) -> &Vec<Span<'a>>;
+}
 
 pub struct MessageDialogActionMap<'a> {
 	map: ActionHashMap,

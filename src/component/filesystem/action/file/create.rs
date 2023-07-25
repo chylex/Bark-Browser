@@ -2,10 +2,9 @@ use std::{fs, io};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
-use ratatui::style::Color;
 use slab_tree::NodeId;
 
-use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLayer};
+use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::event::{FsLayerEvent, FsLayerPendingEvents};
 use crate::component::filesystem::FsLayer;
 use crate::component::input::InputFieldLayer;
@@ -46,7 +45,7 @@ fn create_impl<F>(layer: &mut FsLayer, kind: &'static str, create_function: F) -
 			
 			if let Some(parent_folder_path) = parent_folder_path {
 				if let Some(parent_node_id) = parent_node_id {
-					return ActionResult::PushLayer(Box::new(create_prompt(kind, parent_folder_path.to_path_buf(), create_function, Rc::clone(&layer.pending_events), parent_node_id)));
+					return ActionResult::PushLayer(Box::new(create_prompt(layer.dialog_y(), kind, parent_folder_path.to_path_buf(), create_function, Rc::clone(&layer.pending_events), parent_node_id)));
 				}
 			}
 		}
@@ -55,7 +54,7 @@ fn create_impl<F>(layer: &mut FsLayer, kind: &'static str, create_function: F) -
 	ActionResult::Nothing
 }
 
-fn create_prompt<F>(kind: &'static str, parent_folder: PathBuf, create_function: F, pending_events: FsLayerPendingEvents, view_node_id_to_refresh: NodeId) -> InputFieldLayer where F: Fn(PathBuf) -> io::Result<()> + 'static {
+fn create_prompt<F>(y: u16, kind: &'static str, parent_folder: PathBuf, create_function: F, pending_events: FsLayerPendingEvents, view_node_id_to_refresh: NodeId) -> InputFieldLayer where F: Fn(PathBuf) -> io::Result<()> + 'static {
 	InputFieldLayer::new(Box::new(move |file_name| {
 		if file_name.is_empty() {
 			return ActionResult::Nothing;
@@ -65,7 +64,7 @@ fn create_prompt<F>(kind: &'static str, parent_folder: PathBuf, create_function:
 		
 		if file_path.exists() {
 			let file_path = file_path.to_string_lossy();
-			return ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("File or directory {file_path} already exists."), MessageDialogActionMap::ok())));
+			return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, format!("File or directory {file_path} already exists."))));
 		}
 		
 		match create_function(file_path) {
@@ -74,7 +73,7 @@ fn create_prompt<F>(kind: &'static str, parent_folder: PathBuf, create_function:
 				ActionResult::PopLayer
 			}
 			Err(e) => {
-				ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("Could not create {kind}: {e}"), MessageDialogActionMap::ok())))
+				ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, format!("Could not create {kind}: {e}"))))
 			}
 		}
 	}))

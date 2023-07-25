@@ -24,6 +24,7 @@ pub struct FsLayer {
 	pub tree: FsTree,
 	pub selected_view_node_id: NodeId,
 	pub registers: FsTreeRegisters,
+	cursor_y: u16,
 	pending_keys: Vec<KeyBinding>,
 	pending_events: FsLayerPendingEvents,
 	file_owner_name_cache: FileOwnerNameCache,
@@ -43,12 +44,17 @@ impl FsLayer {
 		Self {
 			tree,
 			selected_view_node_id: root_id,
+			cursor_y: 0,
 			registers: FsTreeRegisters::new(),
 			pending_keys: Vec::new(),
 			pending_events: Rc::new(RefCell::new(Vec::new())),
 			file_owner_name_cache: FileOwnerNameCache::new(),
 			column_width_cache: None,
 		}
+	}
+	
+	pub const fn dialog_y(&self) -> u16 {
+		self.cursor_y.saturating_add(1)
 	}
 	
 	pub fn selected_node(&self) -> Option<NodeRef<FsTreeViewNode>> {

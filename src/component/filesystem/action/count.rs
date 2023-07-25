@@ -1,6 +1,4 @@
-use ratatui::style::Color;
-
-use crate::component::dialog::message::{MessageDialogActionMap, MessageDialogLayer};
+use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::FsLayer;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
@@ -18,7 +16,8 @@ impl Action<FsLayer> for PushCountDigit {
 		
 		if new_count > MAX_COUNT {
 			layer.registers.count = None;
-			ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("Count is too large (> {MAX_COUNT}), it will be reset."), MessageDialogActionMap::ok())))
+			
+			ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(layer.dialog_y(), format!("Count is too large (> {MAX_COUNT}), it will be reset."))))
 		} else {
 			layer.registers.count = Some(new_count);
 			ActionResult::Nothing
