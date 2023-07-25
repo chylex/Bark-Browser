@@ -14,6 +14,7 @@ use crate::component::filesystem::tree::FsTreeViewNode;
 use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
+use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct EditSelected;
 
@@ -39,8 +40,8 @@ fn edit_impl(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &Path) -> Ac
 		return ActionResult::PushLayer(Box::new(MessageDialogLayer::new(Color::LightRed, "Error", format!("Default editor '{}' not found.", editor.to_string_lossy()), MessageDialogActionMap::ok())));
 	}
 	
-	if let Some(parent_node) = node.parent() {
-		FsLayerEvent::RefreshViewNodeChildren(parent_node.node_id()).enqueue(&layer.pending_events);
+	if let Some(parent_node_id) = node.parent_id() {
+		FsLayerEvent::RefreshViewNodeChildren(parent_node_id).enqueue(&layer.pending_events);
 	}
 	
 	ActionResult::Redraw

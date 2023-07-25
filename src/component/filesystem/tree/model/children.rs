@@ -5,6 +5,7 @@ use slab_tree::NodeId;
 
 use crate::component::filesystem::tree::{FsTreeModel, FsTreeModelNode};
 use crate::file::FileEntry;
+use crate::util::slab_tree::{NodeMutExtensions, NodeRefExtensions};
 
 impl FsTreeModel {
 	pub fn resolve_children(&mut self, node_id: NodeId) -> Option<Vec<NodeId>> {
@@ -21,14 +22,14 @@ impl FsTreeModel {
 				}
 			}
 			
-			node.first_child().map(|node| node.node_id()).map(|id| self.collect_next_siblings(id))
+			node.first_child_id().map(|id| self.collect_next_siblings(id))
 		} else {
 			None
 		}
 	}
 	
 	pub fn get_children(&self, node_id: NodeId) -> Option<Vec<NodeId>> {
-		self.get(node_id).and_then(|node| node.first_child().map(|node| node.node_id()).map(|id| self.collect_next_siblings(id)))
+		self.get(node_id).and_then(|node| node.first_child_id()).map(|id| self.collect_next_siblings(id))
 	}
 	
 	fn collect_next_siblings(&self, first_child_id: NodeId) -> Vec<NodeId> {
@@ -37,7 +38,7 @@ impl FsTreeModel {
 		
 		while let Some(child) = child_id.and_then(|id| self.get(id)) {
 			children.push(child.node_id());
-			child_id = child.next_sibling().map(|node| node.node_id());
+			child_id = child.next_sibling_id();
 		}
 		
 		children

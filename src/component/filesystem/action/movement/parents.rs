@@ -4,12 +4,13 @@ use crate::component::filesystem::action::movement::{MovementAction, perform_mov
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::{FsTreeView, FsTreeViewNode};
 use crate::state::Environment;
+use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct MoveToParent;
 
 impl SimpleMovementAction for MoveToParent {
 	fn get_target(_view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
-		selected_node.parent().map(|parent| parent.node_id())
+		selected_node.parent_id()
 	}
 }
 

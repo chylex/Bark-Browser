@@ -12,6 +12,7 @@ use crate::component::input::InputFieldLayer;
 use crate::file::FileKind;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
+use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct CreateFile;
 
@@ -40,7 +41,7 @@ fn create_impl<F>(layer: &mut FsLayer, kind: &'static str, create_function: F) -
 				parent_node_id = Some(selected_node.node_id());
 			} else {
 				parent_folder_path = selected_node_entry.path().and_then(Path::parent);
-				parent_node_id = selected_node.parent().map(|parent| parent.node_id());
+				parent_node_id = selected_node.parent_id();
 			};
 			
 			if let Some(parent_folder_path) = parent_folder_path {
