@@ -29,8 +29,7 @@ impl MoveOrTraverseUpParent {
 			let target_node_id = <MoveToParent as SimpleMovementAction>::get_target(view, &node);
 			if target_node_id.is_some() {
 				return target_node_id;
-			} else if let Some(target_node_id) = layer.tree.traverse_up_root() {
-				layer.tree_structure_changed();
+			} else if let Some(target_node_id) = layer.traverse_up_root() {
 				return Some(target_node_id)
 			}
 		}

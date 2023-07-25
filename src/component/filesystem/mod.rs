@@ -51,13 +51,46 @@ impl FsLayer {
 		}
 	}
 	
-	pub fn tree_structure_changed(&mut self) {
-		self.column_width_cache.take();
-	}
-	
 	pub fn selected_node(&self) -> Option<NodeRef<FsTreeViewNode>> {
 		return self.tree.view.get(self.selected_view_node_id);
 	}
+	
+	pub fn expand(&mut self, view_node_id: NodeId) -> bool {
+		let result = self.tree.expand(view_node_id);
+		tree_structure_changed_if_true(self, result)
+	}
+	
+	pub fn collapse(&mut self, view_node_id: NodeId) -> bool {
+		let result = self.tree.collapse(view_node_id);
+		tree_structure_changed_if_true(self, result)
+	}
+	
+	pub fn expand_or_collapse(&mut self, view_node_id: NodeId) -> bool {
+		let result = self.tree.expand_or_collapse(view_node_id);
+		tree_structure_changed_if_true(self, result)
+	}
+	
+	pub fn refresh_children(&mut self, view_node_id: NodeId) -> bool {
+		let result = self.tree.refresh_children(view_node_id);
+		tree_structure_changed_if_true(self, result)
+	}
+	
+	pub fn traverse_up_root(&mut self) -> Option<NodeId> {
+		let new_root_id = self.tree.traverse_up_root();
+		tree_structure_changed_if_true(self, new_root_id.is_some());
+		new_root_id
+	}
+}
+
+fn tree_structure_changed(layer: &mut FsLayer) {
+	layer.column_width_cache.take();
+}
+
+fn tree_structure_changed_if_true(layer: &mut FsLayer, result: bool) -> bool {
+	if result {
+		tree_structure_changed(layer);
+	}
+	result
 }
 
 impl Layer for FsLayer {

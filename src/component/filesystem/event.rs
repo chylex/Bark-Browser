@@ -31,8 +31,7 @@ impl FsLayerEvent {
 }
 
 fn handle_refresh_view_node_children(layer: &mut FsLayer, view_node_id: &NodeId) {
-	layer.tree.refresh_children(*view_node_id);
-	layer.tree_structure_changed();
+	layer.refresh_children(*view_node_id);
 }
 
 fn handle_delete_view_node(layer: &mut FsLayer, view_node_id: &NodeId) {

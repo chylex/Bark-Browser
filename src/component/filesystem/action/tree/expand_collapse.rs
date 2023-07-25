@@ -19,9 +19,7 @@ impl Action<FsLayer> for ExpandCollapse {
 			return ActionResult::Nothing;
 		}
 		
-		if layer.tree.expand_or_collapse(layer.selected_view_node_id) {
-			layer.tree_structure_changed();
-			
+		if layer.expand_or_collapse(layer.selected_view_node_id) {
 			if depth > 1 {
 				if let Some(node) = layer.selected_node() {
 					if node.data().is_expanded() {
