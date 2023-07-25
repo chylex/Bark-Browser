@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
-use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
+use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MovementWithFallbackFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyMap;
@@ -42,9 +42,9 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "h", CollapseSelectedOr(MoveToParent));
 	map(&mut me, "H", MoveOrTraverseUpParent);
 	map(&mut me, "j", MoveDown);
-	map(&mut me, "J", MoveToNextSibling);
+	map(&mut me, "J", MoveToNextSibling.with_fallback(MoveDown));
 	map(&mut me, "k", MoveUp);
-	map(&mut me, "K", MoveToPreviousSibling);
+	map(&mut me, "K", MoveToPreviousSibling.with_fallback(MoveUp));
 	map(&mut me, "l", ExpandSelectedOr(MoveDown));
 	map(&mut me, "nf", CreateFile);
 	map(&mut me, "nd", CreateDirectory);
@@ -67,11 +67,11 @@ fn create_action_map() -> ActionKeyMap {
 	
 	map(&mut me, "<Down>", MoveDown);
 	map(&mut me, "<Shift-Down>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
-	map(&mut me, "<Alt-Down>", MoveToNextSibling);
+	map(&mut me, "<Alt-Down>", MoveToNextSibling.with_fallback(MoveDown));
 	
 	map(&mut me, "<Up>", MoveUp);
 	map(&mut me, "<Shift-Up>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
-	map(&mut me, "<Alt-Up>", MoveToPreviousSibling);
+	map(&mut me, "<Alt-Up>", MoveToPreviousSibling.with_fallback(MoveUp));
 	
 	map(&mut me, "<Left>", CollapseSelectedOr(MoveToParent));
 	map(&mut me, "<Alt-Left>", MoveOrTraverseUpParent);
