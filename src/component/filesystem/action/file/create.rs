@@ -7,7 +7,7 @@ use slab_tree::NodeId;
 use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::event::{FsLayerEvent, FsLayerPendingEvents};
 use crate::component::filesystem::FsLayer;
-use crate::component::input::InputFieldLayer;
+use crate::component::input::InputFieldOverlayLayer;
 use crate::file::FileKind;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
@@ -54,8 +54,8 @@ fn create_impl<F>(layer: &mut FsLayer, kind: &'static str, create_function: F) -
 	ActionResult::Nothing
 }
 
-fn create_prompt<F>(y: u16, kind: &'static str, parent_folder: PathBuf, create_function: F, pending_events: FsLayerPendingEvents, view_node_id_to_refresh: NodeId) -> InputFieldLayer where F: Fn(PathBuf) -> io::Result<()> + 'static {
-	InputFieldLayer::new(Box::new(move |file_name| {
+fn create_prompt<F>(y: u16, kind: &'static str, parent_folder: PathBuf, create_function: F, pending_events: FsLayerPendingEvents, view_node_id_to_refresh: NodeId) -> InputFieldOverlayLayer where F: Fn(PathBuf) -> io::Result<()> + 'static {
+	InputFieldOverlayLayer::new(Box::new(move |file_name| {
 		if file_name.is_empty() {
 			return ActionResult::Nothing;
 		}
