@@ -27,12 +27,11 @@ pub struct MessageDialogLayer<'a> {
 }
 
 impl<'a> MessageDialogLayer<'a> {
-	fn new<T, M, A>(y: u16, color: Color, title: T, message: M, actions: A) -> Self where T: Into<Line<'a>>, M: Into<Text<'a>>, A: MessageDialogActions<'a> + 'a {
-		let mut message = message.into();
-		message.lines.push(Line::from(actions.describe().clone()).alignment(Alignment::Right));
-		
-		let title = title.into();
+	fn new<A>(y: u16, color: Color, title: Line<'a>, mut message: Text<'a>, actions: A) -> Self where A: MessageDialogActions<'a> + 'a {
+		let action_line = Line::from(actions.describe().clone()).alignment(Alignment::Right);
 		let actions = Box::new(actions);
+		
+		message.lines.push(action_line);
 		
 		Self { y, color, title, message, actions }
 	}
@@ -41,7 +40,7 @@ impl<'a> MessageDialogLayer<'a> {
 		MessageDialogBuilder
 	}
 	
-	pub fn generic_error<M>(y: u16, message: M) -> MessageDialogLayer<'a> where M: Into<Text<'a>> {
+	pub fn generic_error(y: u16, message: impl Into<Text<'a>>) -> MessageDialogLayer<'a> {
 		Self::build()
 			.y(y)
 			.color(Color::LightRed)

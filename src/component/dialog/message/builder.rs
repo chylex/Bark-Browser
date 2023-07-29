@@ -40,13 +40,13 @@ impl MessageDialogBuilder1 {
 }
 
 impl MessageDialogBuilder2 {
-	pub fn title<'a, T>(self, title: T) -> MessageDialogBuilder3<'a> where T: Into<Line<'a>> {
+	pub fn title<'a>(self, title: impl Into<Line<'a>>) -> MessageDialogBuilder3<'a> {
 		MessageDialogBuilder3 { step2: self, title: title.into() }
 	}
 }
 
 impl<'a> MessageDialogBuilder3<'a> {
-	pub fn message<M>(self, message: M) -> MessageDialogBuilder4<'a> where M: Into<Text<'a>> {
+	pub fn message(self, message: impl Into<Text<'a>>) -> MessageDialogBuilder4<'a> {
 		MessageDialogBuilder4 { step3: self, message: message.into() }
 	}
 }

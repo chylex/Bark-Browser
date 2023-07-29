@@ -27,7 +27,7 @@ fn calculate_margin_area(frame: &mut F, top_y: u16, content_width: u16, content_
 	Rect { x, y, width, height }
 }
 
-fn render_dialog_border<'a, T>(frame: &mut F, top_y: u16, content_width: u16, content_height: u16, title: T, color: Color) -> Rect where T: Into<Line<'a>> {
+fn render_dialog_border<'a>(frame: &mut F, top_y: u16, content_width: u16, content_height: u16, title: impl Into<Line<'a>>, color: Color) -> Rect {
 	let margin_area = calculate_margin_area(frame, top_y, content_width, content_height);
 	let border_area = margin_area.inner(&Margin { horizontal: MARGIN_HORIZONTAL, vertical: MARGIN_VERTICAL });
 	
