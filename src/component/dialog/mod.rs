@@ -7,6 +7,7 @@ use ratatui::widgets::{Block, Borders, BorderType, Clear, Padding};
 
 use crate::state::view::F;
 
+pub mod input;
 pub mod message;
 
 const MARGIN_HORIZONTAL: u16 = 1;

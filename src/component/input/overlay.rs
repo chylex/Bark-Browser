@@ -1,4 +1,5 @@
 use crossterm::event::{KeyCode, KeyModifiers};
+use ratatui::style::Color;
 
 use crate::component::input::InputField;
 use crate::input::keymap::KeyBinding;
@@ -46,6 +47,6 @@ impl Layer for InputFieldOverlayLayer {
 	
 	fn render(&mut self, frame: &mut F) {
 		let size = frame.size();
-		self.field.render(frame, size.x, size.bottom().saturating_sub(1), size.width);
+		self.field.render(frame, size.x, size.bottom().saturating_sub(1), size.width, Color::LightYellow, Color::Yellow);
 	}
 }

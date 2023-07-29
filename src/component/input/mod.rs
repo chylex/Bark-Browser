@@ -28,7 +28,13 @@ impl InputField {
 		}
 	}
 	
-	fn text(&self) -> &str {
+	pub fn with_text(text: impl Into<String>) -> Self {
+		let text = text.into();
+		let caret = text.chars().count();
+		Self { text, caret }
+	}
+	
+	pub fn text(&self) -> &str {
 		&self.text
 	}
 	
@@ -119,12 +125,14 @@ impl InputField {
 		}
 	}
 	
-	pub fn render(&mut self, frame: &mut F, x: u16, y: u16, width: u16) {
+	pub fn render(&mut self, frame: &mut F, x: u16, y: u16, width: u16, default_background: Color, trimmed_background: Color) {
 		let area = Rect::new(x, y, width, 1);
 		
 		let widget = InputFieldWidget {
 			text: self.text(),
 			caret: self.caret,
+			default_background,
+			trimmed_background,
 		};
 		
 		let mut caret_x = 0;
@@ -136,6 +144,8 @@ impl InputField {
 struct InputFieldWidget<'a> {
 	text: &'a str,
 	caret: usize,
+	default_background: Color,
+	trimmed_background: Color,
 }
 
 impl<'a> StatefulWidget for InputFieldWidget<'a> {
@@ -199,8 +209,8 @@ impl<'a> StatefulWidget for InputFieldWidget<'a> {
 		}
 		
 		let style = Style::default()
-			.fg(Color::Black)
-			.bg(Color::LightYellow);
+			.fg(Color::White)
+			.bg(self.default_background);
 		
 		Clear.render(area, buf);
 		
@@ -212,8 +222,8 @@ impl<'a> StatefulWidget for InputFieldWidget<'a> {
 		if has_truncated_end {
 			buf.get_mut(area.right().saturating_sub(1), area.y)
 			   .set_char('~')
-			   .set_fg(Color::DarkGray)
-			   .set_bg(Color::Yellow);
+			   .set_fg(Color::White)
+			   .set_bg(self.trimmed_background);
 		}
 		
 		*state = u16::try_from(caret_x).unwrap_or(u16::MAX);
