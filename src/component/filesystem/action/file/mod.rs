@@ -1,7 +1,6 @@
-pub use self::create::CreateDirectory;
-pub use self::create::CreateFile;
-pub use self::delete::DeleteSelected;
-pub use self::edit::EditSelected;
+pub use self::create::*;
+pub use self::delete::*;
+pub use self::edit::*;
 
 mod create;
 mod delete;
