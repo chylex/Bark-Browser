@@ -4,7 +4,7 @@ use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
 use crate::state::layer::Layer;
-use crate::state::view::F;
+use crate::state::view::Frame;
 
 pub use self::environment::Environment;
 
@@ -35,8 +35,9 @@ impl State {
 		self.environment.terminal_height = height;
 	}
 	
-	pub fn render(&mut self, frame: &mut F) {
+	pub fn render(&mut self, frame: &mut Frame) {
 		for layer in &mut self.layers {
+			frame.hide_cursor();
 			layer.render(frame);
 		}
 	}

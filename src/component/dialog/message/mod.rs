@@ -11,7 +11,7 @@ use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
 use crate::state::Environment;
 use crate::state::layer::Layer;
-use crate::state::view::F;
+use crate::state::view::Frame;
 
 pub use self::actions::MessageDialogActionMap;
 
@@ -55,7 +55,7 @@ impl Layer for MessageDialogLayer<'_> {
 		self.actions.handle_input(key_binding)
 	}
 	
-	fn render(&mut self, frame: &mut F) {
+	fn render(&mut self, frame: &mut Frame) {
 		let content_width = u16::try_from(self.message.width()).unwrap_or(u16::MAX);
 		let content_height = u16::try_from(self.message.height()).unwrap_or(u16::MAX);
 		

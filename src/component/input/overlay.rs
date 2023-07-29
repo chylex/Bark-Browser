@@ -6,7 +6,7 @@ use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
 use crate::state::Environment;
 use crate::state::layer::Layer;
-use crate::state::view::F;
+use crate::state::view::Frame;
 
 pub struct InputFieldOverlayLayer {
 	field: InputField,
@@ -45,7 +45,7 @@ impl Layer for InputFieldOverlayLayer {
 		}
 	}
 	
-	fn render(&mut self, frame: &mut F) {
+	fn render(&mut self, frame: &mut Frame) {
 		let size = frame.size();
 		self.field.render(frame, size.x, size.bottom().saturating_sub(1), size.width, Color::LightYellow, Color::Yellow);
 	}

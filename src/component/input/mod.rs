@@ -9,7 +9,7 @@ use ratatui::text::Span;
 use ratatui::widgets::{Clear, Paragraph, StatefulWidget, Widget};
 
 use crate::input::keymap::KeyBinding;
-use crate::state::view::F;
+use crate::state::view::Frame;
 
 pub use self::overlay::InputFieldOverlayLayer;
 
@@ -125,7 +125,7 @@ impl InputField {
 		}
 	}
 	
-	pub fn render(&mut self, frame: &mut F, x: u16, y: u16, width: u16, default_background: Color, trimmed_background: Color) {
+	pub fn render(&mut self, frame: &mut Frame, x: u16, y: u16, width: u16, default_background: Color, trimmed_background: Color) {
 		let area = Rect::new(x, y, width, 1);
 		
 		let widget = InputFieldWidget {

@@ -9,7 +9,7 @@ use slab_tree::{NodeId, NodeRef};
 use crate::component::filesystem::{ColumnWidths, FsLayer};
 use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
 use crate::file::{FileEntry, FileKind, FileOwnerNameCache};
-use crate::state::view::F;
+use crate::state::view::Frame;
 
 mod column;
 mod date_time;
@@ -18,7 +18,7 @@ mod file_owner;
 mod file_permissions;
 mod file_size;
 
-pub fn render(layer: &mut FsLayer, frame: &mut F) {
+pub fn render(layer: &mut FsLayer, frame: &mut Frame) {
 	let size = frame.size();
 	
 	let column_widths = get_or_update_column_widths(layer, size.width);

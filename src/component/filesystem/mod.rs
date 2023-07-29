@@ -12,7 +12,7 @@ use crate::input::keymap::{KeyBinding, KeyMapLookupResult};
 use crate::state::action::ActionResult;
 use crate::state::Environment;
 use crate::state::layer::Layer;
-use crate::state::view::F;
+use crate::state::view::Frame;
 
 mod action;
 mod event;
@@ -133,7 +133,7 @@ impl Layer for FsLayer {
 		}
 	}
 	
-	fn render(&mut self, frame: &mut F) {
+	fn render(&mut self, frame: &mut Frame) {
 		for event in self.pending_events.take() {
 			event.handle(self);
 		}
