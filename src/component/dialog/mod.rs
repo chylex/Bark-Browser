@@ -2,7 +2,7 @@ use std::cmp::min;
 
 use ratatui::layout::{Alignment, Margin, Rect};
 use ratatui::style::{Color, Style};
-use ratatui::text::Line;
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, BorderType, Clear, Padding};
 
 use crate::state::view::Frame;
@@ -33,7 +33,7 @@ fn render_dialog_border<'a>(frame: &mut Frame, top_y: u16, content_width: u16, c
 	let border_area = margin_area.inner(&Margin { horizontal: MARGIN_HORIZONTAL, vertical: MARGIN_VERTICAL });
 	
 	let border_widget = Block::default()
-		.title(title)
+		.title(get_title(title))
 		.title_alignment(Alignment::Center)
 		.borders(Borders::ALL)
 		.border_type(BorderType::Plain)
@@ -46,4 +46,11 @@ fn render_dialog_border<'a>(frame: &mut Frame, top_y: u16, content_width: u16, c
 	frame.render_widget(border_widget, border_area);
 	
 	content_area
+}
+
+fn get_title<'a>(title: impl Into<Line<'a>>) -> Line<'a> {
+	let mut title = title.into();
+	title.spans.insert(0, Span::raw(" "));
+	title.spans.push(Span::raw(" "));
+	title
 }
