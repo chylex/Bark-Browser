@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 
 use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
-use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected};
+use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected, RenameSelectedFileOrDirectory};
 use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MovementWithFallbackFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
@@ -49,7 +49,8 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "nf", CreateFile);
 	map(&mut me, "nd", CreateDirectory);
 	map(&mut me, "q", Quit);
-	map(&mut me, "r", RefreshChildrenOfSelected);
+	map(&mut me, "r", RenameSelectedFileOrDirectory { prefill: true });
+	map(&mut me, "R", RenameSelectedFileOrDirectory { prefill: false });
 	
 	map(&mut me, "%", MoveBetweenFirstAndLastSibling);
 	
@@ -80,6 +81,11 @@ fn create_action_map() -> ActionKeyMap {
 	
 	map(&mut me, "<PageDown>", MoveDown.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<PageUp>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
+	
+	map(&mut me, "<F2>", RenameSelectedFileOrDirectory { prefill: true });
+	map(&mut me, "<Shift-F2>", RenameSelectedFileOrDirectory { prefill: false });
+	
+	map(&mut me, "<F5>", RefreshChildrenOfSelected);
 	
 	me
 }

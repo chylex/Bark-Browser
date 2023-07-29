@@ -78,6 +78,9 @@ impl FsLayer {
 	
 	pub fn refresh_children(&mut self, view_node_id: NodeId) -> bool {
 		let result = self.tree.refresh_children(view_node_id);
+		if result && self.selected_node().is_none() {
+			self.selected_view_node_id = view_node_id;
+		}
 		tree_structure_changed_if_true(self, result)
 	}
 	
