@@ -51,7 +51,8 @@
 
 use std::env;
 use std::error::Error;
-use std::path::PathBuf;
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 mod app;
@@ -69,11 +70,38 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 		return Ok(ExitCode::SUCCESS);
 	}
 	
-	return if let Some(path) = args.get(0).map(PathBuf::from).or_else(|| env::current_dir().ok()) {
-		app::run(&path)?;
-		Ok(ExitCode::SUCCESS)
+	match get_start_path(args.get(0)) {
+		StartPathResult::Ok(path) => {
+			app::run(&path)?;
+			Ok(ExitCode::SUCCESS)
+		},
+		StartPathResult::InvalidPathArgument(path) => {
+			println!("Invalid path: {}", path.to_string_lossy());
+			Ok(ExitCode::FAILURE)
+		},
+		StartPathResult::InvalidWorkingDirectory => {
+			println!("Invalid working directory!");
+			Ok(ExitCode::FAILURE)
+		}
+	}
+}
+
+enum StartPathResult<'a> {
+	Ok(PathBuf),
+	InvalidPathArgument(&'a OsString),
+	InvalidWorkingDirectory,
+}
+
+fn get_start_path(path_arg: Option<&OsString>) -> StartPathResult {
+	return if let Some(path) = path_arg {
+		if let Ok(path) = Path::new(path).canonicalize() {
+			StartPathResult::Ok(path)
+		} else {
+			StartPathResult::InvalidPathArgument(path)
+		}
+	} else if let Ok(path) = env::current_dir() {
+		StartPathResult::Ok(path)
 	} else {
-		println!("Invalid path!");
-		Ok(ExitCode::FAILURE)
+		StartPathResult::InvalidWorkingDirectory
 	}
 }

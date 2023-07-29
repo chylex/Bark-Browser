@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use lazy_static::lazy_static;
+use normalize_path::NormalizePath;
 
 pub use crate::file::kind::FileKind;
 pub use crate::file::mode::{FileMode, Permission};
@@ -29,9 +30,12 @@ lazy_static! {
 }
 
 impl FileEntry {
-	fn new(path: PathBuf, name: FileName, metadata: Result<&Metadata, &std::io::Error>) -> Self {
+	fn new(path: impl AsRef<Path>, name: FileName, metadata: Result<&Metadata, &std::io::Error>) -> Self {
+		let path = path.as_ref();
+		assert!(path.is_absolute(), "Path is not absolute: {path:?}");
+		
 		Self {
-			path: Some(path.canonicalize().unwrap_or(path)),
+			path: Some(path.normalize()),
 			name,
 			kind: metadata.map(FileKind::from).unwrap_or(FileKind::Unknown),
 			mode: metadata.map(FileMode::from).unwrap_or(FileMode::Unknown),
@@ -87,22 +91,21 @@ impl FileEntry {
 impl From<&DirEntry> for FileEntry {
 	fn from(entry: &DirEntry) -> Self {
 		let path = entry.path();
-		let path = path.canonicalize().unwrap_or(path);
 		let name = FileName::from(entry.file_name());
-		return Self::new(path, name, entry.metadata().as_ref());
+		let metadata = entry.metadata();
+		return Self::new(path, name, metadata.as_ref());
 	}
 }
 
 impl From<&Path> for FileEntry {
 	fn from(path: &Path) -> Self {
-		let path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
 		let name = if path == Path::new("/") {
 			FileName::from("/")
 		} else {
 			path.file_name().map(OsStr::to_os_string).map_or_else(FileName::dummy, FileName::from)
 		};
 		
-		let metadata = path.metadata();
+		let metadata = path.symlink_metadata();
 		return Self::new(path, name, metadata.as_ref());
 	}
 }
