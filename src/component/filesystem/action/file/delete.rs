@@ -68,18 +68,13 @@ fn count_files(path: PathBuf) -> CountFilesResult {
 	let mut count = CountFiles { files: 0, directories: 1 };
 	let mut errors = 0_usize;
 	
-	while !remaining_directories.is_empty() {
-		let mut next_step_directories = vec![];
-		next_step_directories.append(&mut remaining_directories);
+	while let Some(path) = remaining_directories.pop() {
+		if count.process_directory(&path, &mut remaining_directories).is_err() {
+			errors = errors.saturating_add(1);
+		}
 		
-		for path in next_step_directories {
-			if count.process_directory(&path, &mut remaining_directories).is_err() {
-				errors = errors.saturating_add(1);
-			}
-			
-			if start_time.elapsed() >= MAX_COUNT_TIME {
-				return count.into_result(CountFilesResultKind::Timeout);
-			}
+		if start_time.elapsed() >= MAX_COUNT_TIME {
+			return count.into_result(CountFilesResultKind::Timeout);
 		}
 	}
 	
@@ -100,7 +95,7 @@ impl CountFiles {
 		for entry in path.read_dir()? {
 			let entry = entry?;
 			
-			if entry.metadata()?.is_dir() {
+			if entry.file_type()?.is_dir() {
 				self.directories = self.directories.saturating_add(1);
 				found_directories.push(entry.path());
 			} else {
