@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 
 use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
-use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelected, RenameSelectedFileOrDirectory};
+use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelected, EditSelectedFileOrDirectory, RenameSelectedFileOrDirectory};
 use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MovementWithFallbackFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
@@ -35,7 +35,7 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "8", PushCountDigit(8));
 	map(&mut me, "9", PushCountDigit(9));
 	
-	map(&mut me, "e", EditSelected);
+	map(&mut me, "e", EditSelectedFileOrDirectory);
 	map(&mut me, "d", DeleteSelected);
 	map(&mut me, "gg", MoveToLineOr(MoveToFirst));
 	map(&mut me, "G", MoveToLineOr(MoveToLast));

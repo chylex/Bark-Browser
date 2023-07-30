@@ -7,29 +7,27 @@ use std::process::Command;
 use slab_tree::NodeRef;
 
 use crate::component::dialog::message::MessageDialogLayer;
+use crate::component::filesystem::action::file::{FileNode, get_selected_file};
 use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
-use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::util::slab_tree::NodeRefExtensions;
 
-pub struct EditSelected;
+pub struct EditSelectedFileOrDirectory;
 
-impl Action<FsLayer> for EditSelected {
+impl Action<FsLayer> for EditSelectedFileOrDirectory {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
-		if let Some(node) = layer.selected_node() {
-			if let Some(entry_path) = layer.tree.get_entry(&node).and_then(FileEntry::path) {
-				return edit_impl(layer, &node, entry_path);
-			}
+		if let Some(FileNode { node, path, .. }) = get_selected_file(layer) {
+			open_default_editor(layer, &node, path)
+		} else {
+			ActionResult::Nothing
 		}
-		
-		ActionResult::Nothing
 	}
 }
 
-fn edit_impl(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &Path) -> ActionResult {
+fn open_default_editor(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &Path) -> ActionResult {
 	let editor = get_editor();
 	let status = Command::new(&editor)
 		.arg(path)
@@ -39,9 +37,9 @@ fn edit_impl(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &Path) -> Ac
 		return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(layer.dialog_y(), format!("Default editor '{}' not found.", editor.to_string_lossy()))));
 	}
 	
-	if let Some(parent_node_id) = node.parent_id() {
-		FsLayerEvent::RefreshViewNodeChildren(parent_node_id).enqueue(&layer.pending_events);
-	}
+	// Refresh the parent directory, or the root node if this is the view root.
+	let node_id_to_refresh = node.parent_id().unwrap_or_else(|| node.node_id());
+	FsLayerEvent::RefreshViewNodeChildren(node_id_to_refresh).enqueue(&layer.pending_events);
 	
 	ActionResult::Redraw
 }
