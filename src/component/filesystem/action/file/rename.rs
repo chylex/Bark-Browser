@@ -8,11 +8,11 @@ use slab_tree::NodeRef;
 
 use crate::component::dialog::input::InputFieldDialogLayer;
 use crate::component::dialog::message::MessageDialogLayer;
-use crate::component::filesystem::action::file::{FileNode, format_io_error, get_selected_file};
+use crate::component::filesystem::action::file::{FileNode, format_io_error, get_entry_kind_name, get_selected_file};
 use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
-use crate::file::{FileEntry, FileKind};
+use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::util::slab_tree::NodeRefExtensions;
@@ -34,12 +34,6 @@ impl Action<FsLayer> for RenameSelectedFileOrDirectory {
 impl RenameSelectedFileOrDirectory {
 	#[allow(clippy::wildcard_enum_match_arm)]
 	fn create_rename_dialog<'a, 'b>(&'a self, layer: &'a FsLayer, node: &'a NodeRef<FsTreeViewNode>, entry: &'a FileEntry, path: PathBuf) -> InputFieldDialogLayer<'b> {
-		let kind_name = match entry.kind() {
-			FileKind::Directory => "Directory",
-			FileKind::Symlink => "Symbolic Link",
-			_ => "File"
-		};
-		
 		let y = layer.dialog_y();
 		let parent_node_id = node.parent_id();
 		let pending_events = Rc::clone(&layer.pending_events);
@@ -48,7 +42,7 @@ impl RenameSelectedFileOrDirectory {
 			.y(y)
 			.min_width(40)
 			.color(Color::LightCyan, Color::Cyan)
-			.title(format!("Rename {kind_name}"))
+			.title(format!("Rename {}", get_entry_kind_name(entry)))
 			.message(format!("Renaming {}", path.to_string_lossy()))
 			.initial_value(self.prefill.then(|| entry.name().str().to_owned()))
 			.build(Box::new(move |new_name| {

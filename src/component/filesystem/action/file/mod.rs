@@ -5,7 +5,7 @@ use slab_tree::NodeRef;
 
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
-use crate::file::FileEntry;
+use crate::file::{FileEntry, FileKind};
 
 pub use self::create::*;
 pub use self::delete::*;
@@ -33,6 +33,15 @@ struct FileNode<'a> {
 	node: NodeRef<'a, FsTreeViewNode>,
 	entry: &'a FileEntry,
 	path: &'a Path,
+}
+
+#[allow(clippy::wildcard_enum_match_arm)]
+const fn get_entry_kind_name(entry: &FileEntry) -> &'static str {
+	match entry.kind() {
+		FileKind::Directory => "Directory",
+		FileKind::Symlink => "Symbolic Link",
+		_ => "File"
+	}
 }
 
 fn format_io_error(err: &io::Error) -> String {
