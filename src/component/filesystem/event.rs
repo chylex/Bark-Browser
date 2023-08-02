@@ -37,6 +37,8 @@ fn handle_refresh_view_node_children(layer: &mut FsLayer, view_node_id: NodeId) 
 }
 
 fn handle_select_view_node_child_by_name(layer: &mut FsLayer, parent_view_node_id: NodeId, child_file_name: &str) {
+	layer.tree.expand(parent_view_node_id);
+	
 	if let Some(parent_node) = layer.tree.view.get(parent_view_node_id) {
 		for child_node in parent_node.children() {
 			if layer.tree.get_entry(&child_node).is_some_and(|entry| entry.name().str() == child_file_name) {

@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 
 use crate::component::filesystem::action::application::{Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
-use crate::component::filesystem::action::file::{CreateDirectory, CreateFile, DeleteSelectedFileOrDirectory, EditSelectedFileOrDirectory, RenameSelectedFileOrDirectory};
+use crate::component::filesystem::action::file::{CreateDirectoryInParentOfSelectedEntry, CreateDirectoryInSelectedDirectory, CreateFileInParentOfSelectedEntry, CreateFileInSelectedDirectory, DeleteSelectedFileOrDirectory, EditSelectedFileOrDirectory, RenameSelectedFileOrDirectory};
 use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MovementWithFallbackFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
 use crate::component::filesystem::action::tree::{ExpandCollapse, RefreshChildrenOfSelected};
 use crate::component::filesystem::FsLayer;
@@ -11,9 +11,9 @@ use crate::state::action::Action;
 
 mod application;
 mod count;
-pub mod file;
-pub mod movement;
-pub mod tree;
+mod file;
+mod movement;
+mod tree;
 
 type ActionKeyMap = KeyMap<Box<dyn Action<FsLayer> + Sync>>;
 
@@ -35,19 +35,23 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "8", PushCountDigit(8));
 	map(&mut me, "9", PushCountDigit(9));
 	
+	map(&mut me, "af", CreateFileInSelectedDirectory);
+	map(&mut me, "ad", CreateDirectoryInSelectedDirectory);
 	map(&mut me, "e", EditSelectedFileOrDirectory);
 	map(&mut me, "d", DeleteSelectedFileOrDirectory);
 	map(&mut me, "gg", MoveToLineOr(MoveToFirst));
 	map(&mut me, "G", MoveToLineOr(MoveToLast));
 	map(&mut me, "h", CollapseSelectedOr(MoveToParent));
 	map(&mut me, "H", MoveOrTraverseUpParent);
+	map(&mut me, "if", CreateFileInSelectedDirectory);
+	map(&mut me, "id", CreateDirectoryInSelectedDirectory);
 	map(&mut me, "j", MoveDown);
 	map(&mut me, "J", MoveToNextSibling.with_fallback(MoveDown));
 	map(&mut me, "k", MoveUp);
 	map(&mut me, "K", MoveToPreviousSibling.with_fallback(MoveUp));
 	map(&mut me, "l", ExpandSelectedOr(MoveDown));
-	map(&mut me, "nf", CreateFile);
-	map(&mut me, "nd", CreateDirectory);
+	map(&mut me, "of", CreateFileInParentOfSelectedEntry);
+	map(&mut me, "od", CreateDirectoryInParentOfSelectedEntry);
 	map(&mut me, "q", Quit);
 	map(&mut me, "r", RenameSelectedFileOrDirectory { prefill: true });
 	map(&mut me, "R", RenameSelectedFileOrDirectory { prefill: false });

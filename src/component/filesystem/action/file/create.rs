@@ -2,79 +2,138 @@ use std::{fs, io};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
+use ratatui::style::Color;
 use slab_tree::NodeId;
 
+use crate::component::dialog::input::InputFieldDialogLayer;
 use crate::component::dialog::message::MessageDialogLayer;
-use crate::component::filesystem::event::{FsLayerEvent, FsLayerPendingEvents};
+use crate::component::filesystem::action::file::{FileNode, get_selected_file};
+use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
-use crate::component::input::InputFieldOverlayLayer;
 use crate::file::FileKind;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::util::slab_tree::NodeRefExtensions;
 
+trait CreateEntry {
+	fn title() -> &'static str;
+	fn kind() -> &'static str;
+	fn create(path: PathBuf) -> io::Result<()>;
+}
+
 pub struct CreateFile;
 
-impl Action<FsLayer> for CreateFile {
-	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
-		create_impl(layer, "file", |p| fs::write(p, b""))
+impl CreateEntry for CreateFile {
+	fn title() -> &'static str {
+		"Create File"
+	}
+	
+	fn kind() -> &'static str {
+		"file"
+	}
+	
+	fn create(path: PathBuf) -> io::Result<()> {
+		fs::write(path, b"")
 	}
 }
 
 pub struct CreateDirectory;
 
-impl Action<FsLayer> for CreateDirectory {
-	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
-		create_impl(layer, "directory", fs::create_dir)
-	}
-}
-
-fn create_impl<F>(layer: &mut FsLayer, kind: &'static str, create_function: F) -> ActionResult where F: Fn(PathBuf) -> io::Result<()> + 'static {
-	if let Some(selected_node) = layer.selected_node() {
-		if let Some(selected_node_entry) = layer.tree.get_entry(&selected_node) {
-			let parent_folder_path;
-			let parent_node_id;
-			
-			if matches!(selected_node_entry.kind(), FileKind::Directory) {
-				parent_folder_path = selected_node_entry.path();
-				parent_node_id = Some(selected_node.node_id());
-			} else {
-				parent_folder_path = selected_node_entry.path().and_then(Path::parent);
-				parent_node_id = selected_node.parent_id();
-			};
-			
-			if let Some(parent_folder_path) = parent_folder_path {
-				if let Some(parent_node_id) = parent_node_id {
-					return ActionResult::PushLayer(Box::new(create_prompt(layer.dialog_y(), kind, parent_folder_path.to_path_buf(), create_function, Rc::clone(&layer.pending_events), parent_node_id)));
-				}
-			}
-		}
+impl CreateEntry for CreateDirectory {
+	fn title() -> &'static str {
+		"Create Directory"
 	}
 	
-	ActionResult::Nothing
+	fn kind() -> &'static str {
+		"directory"
+	}
+	
+	fn create(path: PathBuf) -> io::Result<()> {
+		fs::create_dir(path)
+	}
 }
 
-fn create_prompt<F>(y: u16, kind: &'static str, parent_folder: PathBuf, create_function: F, pending_events: FsLayerPendingEvents, view_node_id_to_refresh: NodeId) -> InputFieldOverlayLayer where F: Fn(PathBuf) -> io::Result<()> + 'static {
-	InputFieldOverlayLayer::new(Box::new(move |file_name| {
-		if file_name.is_empty() {
-			return ActionResult::Nothing;
-		}
-		
-		let file_path = parent_folder.join(file_name);
-		
-		if file_path.exists() {
-			let file_path = file_path.to_string_lossy();
-			return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, format!("File or directory {file_path} already exists."))));
-		}
-		
-		match create_function(file_path) {
-			Ok(_) => {
-				FsLayerEvent::RefreshViewNodeChildren(view_node_id_to_refresh).enqueue(&pending_events);
-				ActionResult::PopLayer
+pub struct CreateFileInSelectedDirectory;
+
+impl Action<FsLayer> for CreateFileInSelectedDirectory {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
+		create_in_selected_directory::<CreateFile>(layer)
+	}
+}
+
+pub struct CreateDirectoryInSelectedDirectory;
+
+impl Action<FsLayer> for CreateDirectoryInSelectedDirectory {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
+		create_in_selected_directory::<CreateDirectory>(layer)
+	}
+}
+
+fn create_in_selected_directory<T: CreateEntry>(layer: &mut FsLayer) -> ActionResult {
+	if let Some(FileNode { node, path, .. }) = get_selected_file(layer).filter(|n| matches!(n.entry.kind(), FileKind::Directory)) {
+		ActionResult::PushLayer(Box::new(create_new_name_prompt::<T>(layer, path.to_owned(), node.node_id())))
+	} else {
+		ActionResult::Nothing
+	}
+}
+
+pub struct CreateFileInParentOfSelectedEntry;
+
+impl Action<FsLayer> for CreateFileInParentOfSelectedEntry {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
+		create_in_parent_of_selected_file::<CreateFile>(layer)
+	}
+}
+
+pub struct CreateDirectoryInParentOfSelectedEntry;
+
+impl Action<FsLayer> for CreateDirectoryInParentOfSelectedEntry {
+	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
+		create_in_parent_of_selected_file::<CreateDirectory>(layer)
+	}
+}
+
+fn create_in_parent_of_selected_file<T: CreateEntry>(layer: &mut FsLayer) -> ActionResult {
+	if let Some((parent_node_id, parent_path)) = get_parent_of_selected_file(layer) {
+		ActionResult::PushLayer(Box::new(create_new_name_prompt::<T>(layer, parent_path.to_owned(), parent_node_id)))
+	} else {
+		ActionResult::Nothing
+	}
+}
+
+fn get_parent_of_selected_file(layer: &FsLayer) -> Option<(NodeId, &Path)> {
+	get_selected_file(layer).and_then(|n| { Some((n.node.parent_id()?, n.path.parent()?)) })
+}
+
+fn create_new_name_prompt<'b, T: CreateEntry>(layer: &FsLayer, parent_folder: PathBuf, view_node_id_to_refresh: NodeId) -> InputFieldDialogLayer<'b> {
+	let y = layer.dialog_y();
+	let pending_events = Rc::clone(&layer.pending_events);
+	
+	InputFieldDialogLayer::build()
+		.y(y)
+		.min_width(40)
+		.color(Color::LightCyan, Color::Cyan)
+		.title(T::title())
+		.message(format!("Creating {} in {}", T::kind(), parent_folder.to_string_lossy()))
+		.build(Box::new(move |new_name| {
+			if new_name.is_empty() {
+				return ActionResult::Nothing;
 			}
-			Err(e) => {
-				ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, format!("Could not create {kind}: {e}"))))
+			
+			let new_path = parent_folder.join(&new_name);
+			if new_path.exists() {
+				return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, "Something with this name already exists.")));
 			}
-		}
-	}))
+			
+			match T::create(new_path) {
+				Ok(_) => {
+					FsLayerEvent::RefreshViewNodeChildren(view_node_id_to_refresh).enqueue(&pending_events);
+					FsLayerEvent::SelectViewNodeChildByFileName(view_node_id_to_refresh, new_name).enqueue(&pending_events);
+					ActionResult::PopLayer
+				}
+				Err(e) => {
+					ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, format!("Could not create {}: {e}", T::kind()))))
+				}
+			}
+		}))
 }
