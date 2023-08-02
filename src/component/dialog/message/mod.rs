@@ -59,7 +59,7 @@ impl Layer for MessageDialogLayer<'_> {
 		let content_width = u16::try_from(self.message.width()).unwrap_or(u16::MAX);
 		let content_height = u16::try_from(self.message.height()).unwrap_or(u16::MAX);
 		
-		let paragraph = Paragraph::new(self.message.clone()).alignment(Alignment::Center);
+		let paragraph = Paragraph::new(self.message.clone()).alignment(Alignment::Left);
 		let content_area = render_dialog_border(frame, self.y, content_width, content_height, self.title.clone(), self.color);
 		
 		frame.render_widget(paragraph, content_area);
