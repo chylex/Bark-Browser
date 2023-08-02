@@ -15,9 +15,9 @@ use crate::file::{FileEntry, FileKind};
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 
-pub struct DeleteSelectedFileOrDirectory;
+pub struct DeleteSelectedEntry;
 
-impl Action<FsLayer> for DeleteSelectedFileOrDirectory {
+impl Action<FsLayer> for DeleteSelectedEntry {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(FileNode { node, entry, path }) = get_selected_file(layer) {
 			ActionResult::PushLayer(Box::new(create_delete_confirmation_dialog(layer, node.node_id(), entry, path.to_owned())))

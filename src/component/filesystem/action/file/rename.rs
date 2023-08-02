@@ -17,11 +17,11 @@ use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::util::slab_tree::NodeRefExtensions;
 
-pub struct RenameSelectedFileOrDirectory {
+pub struct RenameSelectedEntry {
 	pub prefill: bool,
 }
 
-impl Action<FsLayer> for RenameSelectedFileOrDirectory {
+impl Action<FsLayer> for RenameSelectedEntry {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(FileNode { node, entry, path }) = get_selected_file(layer) {
 			ActionResult::PushLayer(Box::new(self.create_rename_dialog(layer, &node, entry, path.to_owned())))
@@ -31,7 +31,7 @@ impl Action<FsLayer> for RenameSelectedFileOrDirectory {
 	}
 }
 
-impl RenameSelectedFileOrDirectory {
+impl RenameSelectedEntry {
 	#[allow(clippy::wildcard_enum_match_arm)]
 	fn create_rename_dialog<'a, 'b>(&'a self, layer: &'a FsLayer, node: &'a NodeRef<FsTreeViewNode>, entry: &'a FileEntry, path: PathBuf) -> InputFieldDialogLayer<'b> {
 		let y = layer.dialog_y();

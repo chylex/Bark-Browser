@@ -15,9 +15,9 @@ use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::util::slab_tree::NodeRefExtensions;
 
-pub struct EditSelectedFileOrDirectory;
+pub struct EditSelectedEntry;
 
-impl Action<FsLayer> for EditSelectedFileOrDirectory {
+impl Action<FsLayer> for EditSelectedEntry {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(FileNode { node, path, .. }) = get_selected_file(layer) {
 			open_default_editor(layer, &node, path)
