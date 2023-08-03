@@ -52,7 +52,7 @@ fn get_or_update_column_widths(layer: &mut FsLayer, cols: u16) -> ColumnWidths {
 		}
 	});
 	
-	let owner_column_width_padded = column_widths.user.saturating_add(1).saturating_add(column_widths.group).saturating_add(2);
+	let owner_column_width_padded = file_owner::visible().then(|| column_widths.user_and_group().saturating_add(2)).unwrap_or(0);
 	let max_name_column_width = cols.saturating_sub(2 + file_size::COLUMN_WIDTH + 2 + date_time::COLUMN_WIDTH + 2 + file_permissions::COLUMN_WIDTH).saturating_sub(owner_column_width_padded);
 	
 	column_widths.name = min(column_widths.name, max_name_column_width);
@@ -163,15 +163,14 @@ impl<'a> NodeRow<'a> {
 		date_time::print(buf, x, y, entry.modified_time());
 		x = x.saturating_add(date_time::COLUMN_WIDTH).saturating_add(2);
 		
-		if exceeds_width(x, column_widths.user.saturating_add(1).saturating_add(column_widths.group), width) {
-			return;
+		if file_owner::visible() {
+			if exceeds_width(x, column_widths.user_and_group(), width) {
+				return;
+			}
+			
+			file_owner::print_user_group(buf, x, y, entry.uid(), entry.gid(), file_owner_name_cache, column_widths);
+			x = x.saturating_add(column_widths.user_and_group()).saturating_add(2);
 		}
-		
-		file_owner::print(buf, x, y, file_owner_name_cache.get_user(entry.uid()), column_widths.user);
-		x = x.saturating_add(column_widths.user).saturating_add(1);
-		
-		file_owner::print(buf, x, y, file_owner_name_cache.get_group(entry.gid()), column_widths.group);
-		x = x.saturating_add(column_widths.group).saturating_add(2);
 		
 		if exceeds_width(x, file_permissions::COLUMN_WIDTH, width) {
 			return;

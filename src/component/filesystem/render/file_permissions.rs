@@ -3,33 +3,22 @@
 use ratatui::buffer::Buffer;
 use ratatui::style::Color;
 
-use crate::file::{FileKind, FileMode, Permission};
+use crate::file::{FileKind, FileMode};
 
-// Kind + Owner + Group + Other
-pub const COLUMN_WIDTH: u16 = 1 + 3 + 3 + 3;
+pub const COLUMN_WIDTH: u16 = system::COLUMN_WIDTH;
 
-const READ_BIT_COLOR: Color = Color::LightBlue;
-const WRITE_BIT_COLOR: Color = Color::LightRed;
-const EXECUTE_BIT_COLOR: Color = Color::LightGreen;
-
+#[cfg(unix)]
 pub fn print(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind, mode: FileMode) {
-	print_kind(buf, x, y, kind);
-	
-	let user = mode.user();
-	let group = mode.group();
-	let others = mode.others();
-	
-	print_permission(buf, x + 1, y, user.read(), 'r', READ_BIT_COLOR);
-	print_permission(buf, x + 2, y, user.write(), 'w', WRITE_BIT_COLOR);
-	print_permission_or_special(buf, x + 3, y, user.execute(), mode.is_setuid(), 'x', 'S', 's', EXECUTE_BIT_COLOR);
-	
-	print_permission(buf, x + 4, y, group.read(), 'r', READ_BIT_COLOR);
-	print_permission(buf, x + 5, y, group.write(), 'w', WRITE_BIT_COLOR);
-	print_permission_or_special(buf, x + 6, y, group.execute(), mode.is_setgid(), 'x', 'S', 's', EXECUTE_BIT_COLOR);
-	
-	print_permission(buf, x + 7, y, others.read(), 'r', READ_BIT_COLOR);
-	print_permission(buf, x + 8, y, others.write(), 'w', WRITE_BIT_COLOR);
-	print_permission_or_special(buf, x + 9, y, others.execute(), mode.is_sticky(), 'x', 'T', 't', EXECUTE_BIT_COLOR);
+	system::print(buf, x, y, kind, mode);
+}
+
+#[cfg(not(unix))]
+pub fn print(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind, _mode: FileMode) {
+	system::print(buf, x, y, kind);
+}
+
+fn print_char(buf: &mut Buffer, x: u16, y: u16, char: char, color: Color) {
+	buf.get_mut(x, y).set_char(char).set_fg(color);
 }
 
 fn print_kind(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind) {
@@ -47,31 +36,81 @@ fn print_kind(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind) {
 	print_char(buf, x, y, c, Color::Gray);
 }
 
-fn print_permission(buf: &mut Buffer, x: u16, y: u16, permission: Permission, c: char, color: Color) {
-	let (c, color) = match permission {
-		Permission::Yes => {
-			(c, color)
-		}
-		Permission::No => {
-			('-', Color::Gray)
-		}
-		Permission::Unknown => {
-			('?', Color::DarkGray)
-		}
-	};
+#[cfg(unix)]
+mod system {
+	use ratatui::buffer::Buffer;
+	use ratatui::style::Color;
 	
-	print_char(buf, x, y, c, color);
-}
-
-fn print_permission_or_special(buf: &mut Buffer, x: u16, y: u16, permission: Permission, special: Option<bool>, permission_only_char: char, special_only_char: char, permission_and_special_char: char, color: Color) {
-	if special == Some(true) {
-		let char = if permission == Permission::Yes { permission_and_special_char } else { special_only_char };
-		print_char(buf, x, y, char, color);
-	} else {
-		print_permission(buf, x, y, permission, permission_only_char, color);
+	use crate::component::filesystem::render::file_permissions::{print_char, print_kind};
+	use crate::file::{FileKind, FileMode, Permission};
+	
+	// Kind + Owner + Group + Other
+	pub const COLUMN_WIDTH: u16 = 1 + 3 + 3 + 3;
+	
+	const READ_BIT_COLOR: Color = Color::LightBlue;
+	const WRITE_BIT_COLOR: Color = Color::LightRed;
+	const EXECUTE_BIT_COLOR: Color = Color::LightGreen;
+	
+	pub fn print(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind, mode: FileMode) {
+		print_kind(buf, x, y, kind);
+		print_permissions(buf, x, y, mode);
+	}
+	
+	fn print_permissions(buf: &mut Buffer, x: u16, y: u16, mode: FileMode) {
+		let user = mode.user();
+		let group = mode.group();
+		let others = mode.others();
+		
+		print_permission(buf, x + 1, y, user.read(), 'r', READ_BIT_COLOR);
+		print_permission(buf, x + 2, y, user.write(), 'w', WRITE_BIT_COLOR);
+		print_permission_or_special(buf, x + 3, y, user.execute(), mode.is_setuid(), 'x', 'S', 's', EXECUTE_BIT_COLOR);
+		
+		print_permission(buf, x + 4, y, group.read(), 'r', READ_BIT_COLOR);
+		print_permission(buf, x + 5, y, group.write(), 'w', WRITE_BIT_COLOR);
+		print_permission_or_special(buf, x + 6, y, group.execute(), mode.is_setgid(), 'x', 'S', 's', EXECUTE_BIT_COLOR);
+		
+		print_permission(buf, x + 7, y, others.read(), 'r', READ_BIT_COLOR);
+		print_permission(buf, x + 8, y, others.write(), 'w', WRITE_BIT_COLOR);
+		print_permission_or_special(buf, x + 9, y, others.execute(), mode.is_sticky(), 'x', 'T', 't', EXECUTE_BIT_COLOR);
+	}
+	
+	fn print_permission(buf: &mut Buffer, x: u16, y: u16, permission: Permission, c: char, color: Color) {
+		let (c, color) = match permission {
+			Permission::Yes => {
+				(c, color)
+			}
+			Permission::No => {
+				('-', Color::Gray)
+			}
+			Permission::Unknown => {
+				('?', Color::DarkGray)
+			}
+		};
+		
+		print_char(buf, x, y, c, color);
+	}
+	
+	fn print_permission_or_special(buf: &mut Buffer, x: u16, y: u16, permission: Permission, special: Option<bool>, permission_only_char: char, special_only_char: char, permission_and_special_char: char, color: Color) {
+		if special == Some(true) {
+			let char = if permission == Permission::Yes { permission_and_special_char } else { special_only_char };
+			print_char(buf, x, y, char, color);
+		} else {
+			print_permission(buf, x, y, permission, permission_only_char, color);
+		}
 	}
 }
 
-fn print_char(buf: &mut Buffer, x: u16, y: u16, char: char, color: Color) {
-	buf.get_mut(x, y).set_char(char).set_fg(color);
+#[cfg(not(unix))]
+mod system {
+	use ratatui::buffer::Buffer;
+	
+	use crate::component::filesystem::render::file_permissions::print_kind;
+	use crate::file::FileKind;
+	
+	// Kind
+	pub const COLUMN_WIDTH: u16 = 1;
+	
+	pub fn print(buf: &mut Buffer, x: u16, y: u16, kind: &FileKind) {
+		print_kind(buf, x, y, kind);
+	}
 }

@@ -143,8 +143,14 @@ impl Layer for FsLayer {
 }
 
 #[derive(Copy, Clone, Default)]
-struct ColumnWidths {
-	name: u16,
-	user: u16,
-	group: u16,
+pub struct ColumnWidths {
+	pub name: u16,
+	pub user: u16,
+	pub group: u16,
+}
+
+impl ColumnWidths {
+	const fn user_and_group(self) -> u16 {
+		self.user.saturating_add(1).saturating_add(self.group)
+	}
 }

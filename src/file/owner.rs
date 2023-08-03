@@ -113,11 +113,11 @@ mod system {
 
 #[cfg(not(unix))]
 mod system {
-	pub fn get_user_name_by_uid(uid: u32) -> Option<String> {
+	pub fn get_user_name_by_uid(_uid: u32) -> Option<String> {
 		None
 	}
 	
-	pub fn get_group_name_by_gid(gid: u32) -> Option<String> {
+	pub fn get_group_name_by_gid(_gid: u32) -> Option<String> {
 		None
 	}
 }
