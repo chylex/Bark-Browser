@@ -2,10 +2,10 @@ FROM rust:1.71.0 as builder
 
 WORKDIR /app
 COPY . .
-RUN cargo build --release
+RUN ./scripts/build.sh
 
 
 FROM scratch as exporter
-COPY --from=builder /app/target/release/bark .
+COPY --from=builder /app/out/ .
 
 # docker build --output out .
