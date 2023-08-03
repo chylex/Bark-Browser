@@ -62,9 +62,23 @@ mod input;
 mod state;
 mod util;
 
+const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
+
 #[allow(clippy::print_stdout)]
 fn main() -> Result<ExitCode, Box<dyn Error>> {
 	let args = env::args_os().skip(1).collect::<Vec<_>>();
+	if args.len() == 1 && args.get(0).is_some_and(|arg| arg == "-v" || arg == "--version") {
+		println!("{}", VERSION.unwrap_or("unknown"));
+		return Ok(ExitCode::SUCCESS);
+	}
+	
+	#[allow(clippy::indexing_slicing)] // Guarded by condition.
+	let args = if args.len() == 2 && args.get(0).is_some_and(|arg| arg == "--") {
+		&args[1..]
+	} else {
+		&args[..]
+	};
+	
 	if args.len() > 1 {
 		println!("Too many arguments!");
 		return Ok(ExitCode::SUCCESS);
