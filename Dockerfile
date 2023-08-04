@@ -7,5 +7,3 @@ RUN ./scripts/build.sh
 
 FROM scratch as exporter
 COPY --from=builder /app/out/ .
-
-# docker build --output out .
