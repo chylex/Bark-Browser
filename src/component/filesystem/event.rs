@@ -53,7 +53,7 @@ fn handle_delete_view_node(layer: &mut FsLayer, view_node_id: NodeId) {
 	let view = &mut layer.tree.view;
 	
 	if layer.selected_view_node_id == view_node_id {
-		layer.selected_view_node_id = view.get_node_above_id(view_node_id).unwrap_or_else(|| view.root_id());
+		layer.selected_view_node_id = view.get_node_below_id(view_node_id).or_else(|| view.get_node_above_id(view_node_id)).unwrap_or_else(|| view.root_id());
 	}
 	
 	if let Some(view_node) = view.remove(view_node_id) {
