@@ -31,7 +31,7 @@ See [action/mod.rs](https://github.com/chylex/Bark-Browser/blob/main/src/compone
 
 ## Windows Subsystem for Linux
 
-Run `wsl.sh` from a Debian-based WSL environment to quickly install Rust and CMake into WSL.
+Run `scripts/wsl.sh` from a Debian-based WSL environment to quickly install Rust and CMake into WSL.
 
 ## Docker
 
