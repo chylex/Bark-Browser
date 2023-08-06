@@ -209,7 +209,7 @@ impl<'a> StatefulWidget for InputFieldWidget<'a> {
 		}
 		
 		let style = Style::default()
-			.fg(Color::White)
+			.fg(Color::Black)
 			.bg(self.default_background);
 		
 		Clear.render(area, buf);
@@ -222,7 +222,7 @@ impl<'a> StatefulWidget for InputFieldWidget<'a> {
 		if has_truncated_end {
 			buf.get_mut(area.right().saturating_sub(1), area.y)
 			   .set_char('~')
-			   .set_fg(Color::White)
+			   .set_fg(Color::Black)
 			   .set_bg(self.trimmed_background);
 		}
 		
