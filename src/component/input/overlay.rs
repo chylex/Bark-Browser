@@ -39,12 +39,16 @@ impl<'a> Layer for InputFieldOverlayLayer<'a> {
 				(self.confirm_action)(self.field.text().to_owned())
 			}
 			
-			_ => {
-				if self.field.handle_input(key_binding) {
-					ActionResult::Draw
+			(KeyCode::Backspace, KeyModifiers::NONE) => {
+				if self.field.text().is_empty() {
+					ActionResult::PopLayer
 				} else {
-					ActionResult::Nothing
+					ActionResult::draw_if(self.field.handle_input(key_binding))
 				}
+			}
+			
+			_ => {
+				ActionResult::draw_if(self.field.handle_input(key_binding))
 			}
 		}
 	}

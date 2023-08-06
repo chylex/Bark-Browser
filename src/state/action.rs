@@ -13,3 +13,13 @@ pub enum ActionResult {
 	ReplaceLayer(Box<dyn Layer>),
 	PopLayer,
 }
+
+impl ActionResult {
+	pub const fn draw_if(condition: bool) -> Self {
+		if condition {
+			Self::Draw
+		} else {
+			Self::Nothing
+		}
+	}
+}

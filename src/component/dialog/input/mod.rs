@@ -53,11 +53,7 @@ impl<'a> Layer for InputFieldDialogLayer<'a> {
 			}
 			
 			_ => {
-				if self.field.handle_input(key_binding) {
-					ActionResult::Draw
-				} else {
-					ActionResult::Nothing
-				}
+				ActionResult::draw_if(self.field.handle_input(key_binding))
 			}
 		}
 	}
