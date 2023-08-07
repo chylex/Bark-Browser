@@ -22,4 +22,8 @@ impl ActionResult {
 			Self::Nothing
 		}
 	}
+	
+	pub fn push_layer<T>(layer: T) -> Self where T: Layer + 'static {
+		Self::PushLayer(Box::new(layer))
+	}
 }

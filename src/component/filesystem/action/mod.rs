@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 
-use crate::component::filesystem::action::application::{Quit, RedrawScreen};
+use crate::component::filesystem::action::application::{EnterCommandMode, Quit, RedrawScreen};
 use crate::component::filesystem::action::count::PushCountDigit;
 use crate::component::filesystem::action::file::{CreateDirectoryInParentOfSelectedEntry, CreateDirectoryInSelectedDirectory, CreateFileInParentOfSelectedEntry, CreateFileInSelectedDirectory, DeleteSelectedEntry, EditSelectedEntry, RenameSelectedEntry};
 use crate::component::filesystem::action::movement::{CollapseSelectedOr, ExpandSelectedOr, MoveBetweenFirstAndLastSibling, MoveDown, MovementWithCountFactory, MovementWithFallbackFactory, MoveOrTraverseUpParent, MoveToFirst, MoveToLast, MoveToLineOr, MoveToNextSibling, MoveToParent, MoveToPreviousSibling, MoveUp, ScreenHeightRatio};
@@ -57,6 +57,7 @@ fn create_action_map() -> ActionKeyMap {
 	map(&mut me, "R", RenameSelectedEntry { prefill: false });
 	
 	map(&mut me, "%", MoveBetweenFirstAndLastSibling);
+	map(&mut me, ":", EnterCommandMode);
 	
 	map(&mut me, "<Ctrl-B>", MoveUp.with_custom_count(ScreenHeightRatio(1)));
 	map(&mut me, "<Ctrl-C>", Quit);

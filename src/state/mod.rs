@@ -10,6 +10,7 @@ pub use self::environment::Environment;
 
 mod environment;
 pub mod action;
+pub mod event;
 pub mod layer;
 pub mod view;
 
