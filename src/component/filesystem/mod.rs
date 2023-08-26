@@ -11,6 +11,7 @@ use crate::file::FileOwnerNameCache;
 use crate::input::keymap::{KeyBinding, KeyMapLookupResult};
 use crate::state::action::ActionResult;
 use crate::state::Environment;
+use crate::state::event::{EventQueue, EventResult};
 use crate::state::layer::Layer;
 use crate::state::view::Frame;
 
@@ -27,6 +28,7 @@ pub struct FsLayer {
 	cursor_y: u16,
 	pending_keys: Vec<KeyBinding>,
 	pending_events: FsLayerPendingEvents,
+	event_queue: EventQueue<FsLayer>,
 	file_owner_name_cache: FileOwnerNameCache,
 	column_width_cache: Option<ColumnWidths>,
 }
@@ -48,9 +50,14 @@ impl FsLayer {
 			registers: FsTreeRegisters::new(),
 			pending_keys: Vec::new(),
 			pending_events: Rc::new(RefCell::new(Vec::new())),
+			event_queue: EventQueue::new(),
 			file_owner_name_cache: FileOwnerNameCache::new(),
 			column_width_cache: None,
 		}
+	}
+	
+	pub fn events(&self) -> EventQueue<Self> {
+		self.event_queue.rc_clone()
 	}
 	
 	pub const fn dialog_y(&self) -> u16 {
@@ -131,6 +138,10 @@ impl Layer for FsLayer {
 				ActionResult::Nothing
 			}
 		}
+	}
+	
+	fn handle_events(&mut self, environment: &Environment) -> EventResult {
+		self.event_queue.take().into_iter().fold(EventResult::Nothing, |result, event| result.merge(event.dispatch(self, environment)))
 	}
 	
 	fn render(&mut self, frame: &mut Frame) {

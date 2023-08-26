@@ -5,6 +5,7 @@ use crossterm::event::{Event, KeyEventKind};
 use crate::input::keymap::KeyBinding;
 use crate::state::{Environment, State};
 use crate::state::action::ActionResult;
+use crate::state::event::EventResult;
 use crate::state::view::View;
 
 pub fn run(start_path: &Path) -> std::io::Result<()> {
@@ -14,41 +15,55 @@ pub fn run(start_path: &Path) -> std::io::Result<()> {
 	let environment = Environment::try_from(&view)?;
 	let mut state = State::with_root_path(start_path, environment);
 	
-	'render: loop {
+	loop {
+		match state.handle_events() {
+			EventResult::Nothing => {}
+			
+			EventResult::Draw => {
+				view.set_dirty(false);
+			}
+			
+			EventResult::Redraw => {
+				view.set_dirty(true);
+			}
+		}
+		
 		view.render(|frame| state.render(frame))?;
 		
-		'event: loop {
-			match handle_event(&mut state, crossterm::event::read()?) {
-				ActionResult::Nothing => {
-					continue 'event;
-				}
-				
-				ActionResult::Draw => {
-					continue 'render;
-				}
-				
-				ActionResult::Redraw => {
-					view.clear()?;
-					continue 'render;
-				}
-				
-				ActionResult::PushLayer(layer) => {
-					state.push_layer(layer);
-					continue 'render;
-				}
-				
-				ActionResult::ReplaceLayer(layer) => {
-					state.pop_layer();
-					state.push_layer(layer);
-					continue 'render;
-				}
-				
-				ActionResult::PopLayer => {
-					if state.pop_layer() {
-						break 'render;
-					} else {
-						continue 'render;
-					}
+		match handle_terminal_event(&mut state, crossterm::event::read()?) {
+			ActionResult::Nothing => {
+				continue;
+			}
+			
+			ActionResult::Draw => {
+				view.set_dirty(false);
+				continue;
+			}
+			
+			ActionResult::Redraw => {
+				view.set_dirty(true);
+				continue;
+			}
+			
+			ActionResult::PushLayer(layer) => {
+				state.push_layer(layer);
+				view.set_dirty(false);
+				continue;
+			}
+			
+			ActionResult::ReplaceLayer(layer) => {
+				state.pop_layer();
+				state.push_layer(layer);
+				view.set_dirty(false);
+				continue;
+			}
+			
+			ActionResult::PopLayer => {
+				if state.pop_layer() {
+					break;
+				} else {
+					view.set_dirty(false);
+					continue;
 				}
 			}
 		}
@@ -58,7 +73,7 @@ pub fn run(start_path: &Path) -> std::io::Result<()> {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn handle_event(state: &mut State, event: Event) -> ActionResult {
+fn handle_terminal_event(state: &mut State, event: Event) -> ActionResult {
 	if let Event::Key(key) = event {
 		if key.kind == KeyEventKind::Release {
 			ActionResult::Nothing

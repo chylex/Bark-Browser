@@ -3,6 +3,7 @@ use std::path::Path;
 use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
+use crate::state::event::EventResult;
 use crate::state::layer::Layer;
 use crate::state::view::Frame;
 
@@ -10,6 +11,7 @@ pub use self::environment::Environment;
 
 mod environment;
 pub mod action;
+pub mod event;
 pub mod layer;
 pub mod view;
 
@@ -26,8 +28,12 @@ impl State {
 		}
 	}
 	
+	pub fn handle_events(&mut self) -> EventResult {
+		self.layers.iter_mut().fold(EventResult::Nothing, |result, layer| result.merge(layer.handle_events(&self.environment)))
+	}
+	
 	pub fn handle_input(&mut self, key_binding: KeyBinding) -> ActionResult {
-		self.layers.last_mut().map(|layer| layer.handle_input(&self.environment, key_binding)).unwrap_or(ActionResult::Nothing)
+		self.layers.last_mut().map_or(ActionResult::Nothing, |layer| layer.handle_input(&self.environment, key_binding))
 	}
 	
 	pub fn handle_resize(&mut self, width: u16, height: u16) {

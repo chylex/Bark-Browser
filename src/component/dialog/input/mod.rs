@@ -12,6 +12,7 @@ use crate::component::input::InputField;
 use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
 use crate::state::Environment;
+use crate::state::event::EventResult;
 use crate::state::layer::Layer;
 use crate::state::view::Frame;
 
@@ -57,6 +58,10 @@ impl<'a> Layer for InputFieldDialogLayer<'a> {
 				ActionResult::draw_if(self.field.handle_input(key_binding))
 			}
 		}
+	}
+	
+	fn handle_events(&mut self, _environment: &Environment) -> EventResult {
+		EventResult::Nothing
 	}
 	
 	fn render(&mut self, frame: &mut Frame) {

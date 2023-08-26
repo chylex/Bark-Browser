@@ -10,6 +10,7 @@ use ratatui::widgets::{StatefulWidget, Widget};
 
 pub struct View {
 	term: Terminal<CrosstermBackend<Stdout>>,
+	render_request: RenderRequest,
 }
 
 impl View {
@@ -22,7 +23,7 @@ impl View {
 		term.hide_cursor()?;
 		term.clear()?;
 		
-		Ok(Self { term })
+		Ok(Self { term, render_request: RenderRequest::Draw })
 	}
 	
 	pub fn restore_terminal_on_panic() {
@@ -45,16 +46,62 @@ impl View {
 		self.term.size()
 	}
 	
-	pub fn clear(&mut self) -> io::Result<()> {
-		self.term.clear()
+	pub fn set_dirty(&mut self, full_redraw: bool) {
+		let new_request = if full_redraw {
+			RenderRequest::Redraw
+		} else {
+			RenderRequest::Draw
+		};
+		
+		self.render_request = self.render_request.merge(new_request);
 	}
 	
-	pub fn render<R>(&mut self, renderer: R) -> io::Result<CompletedFrame> where R: FnOnce(&mut Frame) {
+	pub fn render<R>(&mut self, renderer: R) -> io::Result<()> where R: FnOnce(&mut Frame) {
+		match self.render_request.consume() {
+			RenderRequest::Skip => {}
+			
+			RenderRequest::Draw => {
+				self.draw(renderer)?;
+			}
+			
+			RenderRequest::Redraw => {
+				self.term.clear()?;
+				self.draw(renderer)?;
+			}
+		}
+		
+		Ok(())
+	}
+	
+	fn draw<R>(&mut self, renderer: R) -> io::Result<CompletedFrame> where R: FnOnce(&mut Frame) {
 		self.term.draw(|frame| {
 			let mut frame = Frame::new(frame);
 			renderer(&mut frame);
 			frame.apply_cursor();
 		})
+	}
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+enum RenderRequest {
+	Skip,
+	Draw,
+	Redraw,
+}
+
+impl RenderRequest {
+	fn merge(self, other: Self) -> Self {
+		if self == Self::Redraw || other == Self::Redraw {
+			Self::Redraw
+		} else if self == Self::Draw || other == Self::Draw {
+			Self::Draw
+		} else {
+			Self::Skip
+		}
+	}
+	
+	fn consume(&mut self) -> Self {
+		std::mem::replace(self, Self::Skip)
 	}
 }
 
