@@ -63,7 +63,7 @@ impl<'a> MessageDialogBuilder4<'a> {
 		self.actions(MessageDialogActionMap::ok())
 	}
 	
-	pub fn yes_no(self, yes_action: Box<dyn Fn() -> ActionResult>) -> MessageDialogLayer<'a> {
+	pub fn yes_no<F>(self, yes_action: F) -> MessageDialogLayer<'a> where F: Fn() -> ActionResult + 'static {
 		self.actions(MessageDialogActionMap::yes_no(yes_action))
 	}
 }

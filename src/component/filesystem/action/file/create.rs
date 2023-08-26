@@ -71,7 +71,7 @@ impl Action<FsLayer> for CreateDirectoryInSelectedDirectory {
 
 fn create_in_selected_directory<T: CreateEntry>(layer: &mut FsLayer) -> ActionResult {
 	if let Some(FileNode { node, path, .. }) = get_selected_file(layer).filter(|n| matches!(n.entry.kind(), FileKind::Directory)) {
-		ActionResult::PushLayer(Box::new(create_new_name_prompt::<T>(layer, path.to_owned(), node.node_id())))
+		ActionResult::push_layer(create_new_name_prompt::<T>(layer, path.to_owned(), node.node_id()))
 	} else {
 		ActionResult::Nothing
 	}
@@ -95,7 +95,7 @@ impl Action<FsLayer> for CreateDirectoryInParentOfSelectedEntry {
 
 fn create_in_parent_of_selected_file<T: CreateEntry>(layer: &mut FsLayer) -> ActionResult {
 	if let Some((parent_node_id, parent_path)) = get_parent_of_selected_file(layer) {
-		ActionResult::PushLayer(Box::new(create_new_name_prompt::<T>(layer, parent_path.to_owned(), parent_node_id)))
+		ActionResult::push_layer(create_new_name_prompt::<T>(layer, parent_path.to_owned(), parent_node_id))
 	} else {
 		ActionResult::Nothing
 	}
@@ -115,14 +115,14 @@ fn create_new_name_prompt<'b, T: CreateEntry>(layer: &FsLayer, parent_folder: Pa
 		.color(Color::LightCyan, Color::Cyan)
 		.title(T::title())
 		.message(format!("Creating {} in {}", T::kind(), parent_folder.to_string_lossy()))
-		.build(Box::new(move |new_name| {
+		.on_confirm(move |new_name| {
 			if new_name.is_empty() {
 				return ActionResult::Nothing;
 			}
 			
 			let new_path = parent_folder.join(&new_name);
 			if new_path.exists() {
-				return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, "Something with this name already exists.")));
+				return ActionResult::push_layer(MessageDialogLayer::error(y, "Something with this name already exists."));
 			}
 			
 			match T::create(new_path) {
@@ -132,8 +132,8 @@ fn create_new_name_prompt<'b, T: CreateEntry>(layer: &FsLayer, parent_folder: Pa
 					ActionResult::PopLayer
 				}
 				Err(e) => {
-					ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y, format!("Could not create {}: {e}", T::kind()))))
+					ActionResult::push_layer(MessageDialogLayer::error(y, format!("Could not create {}: {e}", T::kind())))
 				}
 			}
-		}))
+		})
 }

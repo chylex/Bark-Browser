@@ -20,7 +20,7 @@ pub struct DeleteSelectedEntry;
 impl Action<FsLayer> for DeleteSelectedEntry {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(FileNode { node, entry, path }) = get_selected_file(layer) {
-			ActionResult::PushLayer(Box::new(create_delete_confirmation_dialog(layer, node.node_id(), entry, path.to_owned())))
+			ActionResult::push_layer(create_delete_confirmation_dialog(layer, node.node_id(), entry, path.to_owned()))
 		} else {
 			ActionResult::Nothing
 		}
@@ -45,17 +45,17 @@ fn create_delete_confirmation_dialog<'a>(layer: &FsLayer, view_node_id: NodeId, 
 			Line::from(format!("Permanently delete {}?", path.to_string_lossy())),
 			Line::from(format!("This will affect {}.", total_files.describe())),
 		])
-		.yes_no(Box::new(move || {
+		.yes_no(move || {
 			match delete_path_recursively(&path) {
 				Ok(_) => {
 					FsLayerEvent::DeleteViewNode(view_node_id).enqueue(&pending_events);
 					ActionResult::PopLayer
 				}
 				Err(e) => {
-					ActionResult::ReplaceLayer(Box::new(MessageDialogLayer::generic_error(y.saturating_add(1), e.to_string())))
+					ActionResult::replace_layer(MessageDialogLayer::error(y.saturating_add(1), e.to_string()))
 				}
 			}
-		}))
+		})
 }
 
 const MAX_COUNT_TIME: Duration = Duration::from_secs(5);

@@ -26,12 +26,12 @@ impl Action<FsLayer> for ExpandCollapse {
 						let child_node_ids = node.children().map(|node| node.node_id()).collect();
 						let remaining_depth = depth.saturating_sub(1);
 						if !expand_children_to_depth(layer, child_node_ids, remaining_depth) {
-							return ActionResult::PushLayer(Box::new(MessageDialogLayer::build()
+							return ActionResult::push_layer(MessageDialogLayer::build()
 								.y(layer.dialog_y())
 								.color(Color::LightYellow)
 								.title("Expansion Stopped")
 								.message(format!("Expansion was taking more than {} seconds, stopping now.", MAX_EXPANSION_TIME.as_secs()))
-								.ok()));
+								.ok());
 						}
 					}
 				}

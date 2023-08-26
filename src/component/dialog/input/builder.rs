@@ -69,7 +69,7 @@ impl<'a> InputFieldDialogBuilder5<'a> {
 		self
 	}
 	
-	pub fn build(self, confirm_action: Box<dyn Fn(String) -> ActionResult>) -> InputFieldDialogLayer<'a> {
+	pub fn on_confirm<F>(self, confirm_action: F) -> InputFieldDialogLayer<'a> where F: Fn(String) -> ActionResult + 'static {
 		let step4 = self.step4;
 		let step3 = step4.step3;
 		let step2 = step3.step2;

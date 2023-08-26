@@ -34,7 +34,7 @@ fn open_default_editor(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &P
 		.status();
 	
 	if status.is_err_and(|e| e.kind() == ErrorKind::NotFound) {
-		return ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(layer.dialog_y(), format!("Default editor '{}' not found.", editor.to_string_lossy()))));
+		return ActionResult::push_layer(MessageDialogLayer::error(layer.dialog_y(), format!("Default editor '{}' not found.", editor.to_string_lossy())));
 	}
 	
 	// Refresh the parent directory, or the root node if this is the view root.

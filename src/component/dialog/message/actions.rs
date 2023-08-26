@@ -37,9 +37,9 @@ impl<'a> MessageDialogActionMap<'a> {
 		])
 	}
 	
-	pub fn yes_no(yes_action: Box<dyn Fn() -> ActionResult>) -> Self {
+	pub fn yes_no<F>(yes_action: F) -> Self where F: Fn() -> ActionResult + 'static {
 		let mut map = ActionHashMap::new();
-		map.insert(KeyBinding::char('y'), yes_action);
+		map.insert(KeyBinding::char('y'), Box::new(yes_action));
 		map.insert(KeyBinding::char('n'), Box::new(|| ActionResult::PopLayer));
 		
 		Self::new(map, vec![

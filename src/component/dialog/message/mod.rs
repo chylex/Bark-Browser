@@ -40,7 +40,7 @@ impl<'a> MessageDialogLayer<'a> {
 		MessageDialogBuilder
 	}
 	
-	pub fn generic_error(y: u16, message: impl Into<Text<'a>>) -> MessageDialogLayer<'a> {
+	pub fn error(y: u16, message: impl Into<Text<'a>>) -> MessageDialogLayer<'a> {
 		Self::build()
 			.y(y)
 			.color(Color::LightRed)

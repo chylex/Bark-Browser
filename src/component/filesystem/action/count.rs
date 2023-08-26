@@ -17,7 +17,7 @@ impl Action<FsLayer> for PushCountDigit {
 		if new_count > MAX_COUNT {
 			layer.registers.count = None;
 			
-			ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(layer.dialog_y(), format!("Count is too large (> {MAX_COUNT}), it will be reset."))))
+			ActionResult::push_layer(MessageDialogLayer::error(layer.dialog_y(), format!("Count is too large (> {MAX_COUNT}), it will be reset.")))
 		} else {
 			layer.registers.count = Some(new_count);
 			ActionResult::Nothing

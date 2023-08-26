@@ -29,8 +29,9 @@ pub struct InputFieldDialogLayer<'a> {
 }
 
 impl<'a> InputFieldDialogLayer<'a> {
-	fn new(y: u16, min_width: u16, default_color: Color, darker_color: Color, title: Line<'a>, message: Text<'a>, initial_value: Option<String>, confirm_action: Box<dyn Fn(String) -> ActionResult>) -> Self {
+	fn new<F>(y: u16, min_width: u16, default_color: Color, darker_color: Color, title: Line<'a>, message: Text<'a>, initial_value: Option<String>, confirm_action: F) -> Self where F: Fn(String) -> ActionResult + 'static {
 		let field = initial_value.map_or_else(InputField::new, InputField::with_text);
+		let confirm_action = Box::new(confirm_action);
 		Self { y, min_width, default_color, darker_color, title, message, field, confirm_action }
 	}
 	

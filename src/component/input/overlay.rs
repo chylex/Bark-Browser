@@ -17,12 +17,10 @@ pub struct InputFieldOverlayLayer<'a> {
 }
 
 impl<'a> InputFieldOverlayLayer<'a> {
-	pub fn new(read_only_prefix: &'a str, confirm_action: Box<dyn Fn(String) -> ActionResult>) -> Self {
-		Self {
-			field: InputField::new(),
-			read_only_prefix,
-			confirm_action,
-		}
+	pub fn new<F>(read_only_prefix: &'a str, confirm_action: F) -> Self where F: Fn(String) -> ActionResult + 'static {
+		let field = InputField::new();
+		let confirm_action = Box::new(confirm_action);
+		Self { field, read_only_prefix, confirm_action }
 	}
 }
 

@@ -24,7 +24,7 @@ pub struct RenameSelectedEntry {
 impl Action<FsLayer> for RenameSelectedEntry {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
 		if let Some(FileNode { node, entry, path }) = get_selected_file(layer) {
-			ActionResult::PushLayer(Box::new(self.create_rename_dialog(layer, &node, entry, path.to_owned())))
+			ActionResult::push_layer(self.create_rename_dialog(layer, &node, entry, path.to_owned()))
 		} else {
 			ActionResult::Nothing
 		}
@@ -45,7 +45,7 @@ impl RenameSelectedEntry {
 			.title(format!("Rename {}", get_entry_kind_name(entry)))
 			.message(format!("Renaming {}", path.to_string_lossy()))
 			.initial_value(self.prefill.then(|| entry.name().str().to_owned()))
-			.build(Box::new(move |new_name| {
+			.on_confirm(move |new_name| {
 				match rename_file(&path, &new_name) {
 					Ok(_) => {
 						if let Some(parent_node_id) = parent_node_id {
@@ -55,10 +55,10 @@ impl RenameSelectedEntry {
 						ActionResult::PopLayer
 					}
 					Err(e) => {
-						ActionResult::PushLayer(Box::new(MessageDialogLayer::generic_error(y.saturating_add(1), format_io_error(&e))))
+						ActionResult::push_layer(MessageDialogLayer::error(y.saturating_add(1), format_io_error(&e)))
 					}
 				}
-			}))
+			})
 	}
 }
 
