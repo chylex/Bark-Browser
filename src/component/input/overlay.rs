@@ -1,6 +1,9 @@
+use std::cmp::min;
+
 use crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
+use ratatui::text::Span;
 use ratatui::widgets::Paragraph;
 
 use crate::component::input::InputField;
@@ -60,17 +63,22 @@ impl<'a> Layer for InputFieldOverlayLayer<'a> {
 		let x = size.x;
 		let y = size.bottom().saturating_sub(1);
 		
-		let prefix_style = Style::new()
-			.fg(Color::Black)
-			.bg(Color::LightYellow);
+		let prefix_text = Span::from(self.read_only_prefix);
+		let prefix_width = min(u16::try_from(prefix_text.width()).unwrap_or(u16::MAX), size.width.saturating_sub(2));
 		
-		let prefix_paragraph = Paragraph::new(self.read_only_prefix)
-			.style(prefix_style);
+		if prefix_width > 0 {
+			let prefix_style = Style::new()
+				.fg(Color::Black)
+				.bg(Color::LightYellow);
+			
+			let prefix_paragraph = Paragraph::new(self.read_only_prefix)
+				.style(prefix_style);
+			
+			frame.render_widget(prefix_paragraph, Rect { x, y, width: prefix_width, height: 1 });
+		}
 		
-		frame.render_widget(prefix_paragraph, Rect { x, y, width: 1, height: 1 });
-		
-		if size.width > 1 {
-			self.field.render(frame, x.saturating_add(1), y, size.width.saturating_sub(1), Color::LightYellow, Color::Yellow);
+		if size.width > prefix_width {
+			self.field.render(frame, x.saturating_add(prefix_width), y, size.width.saturating_sub(prefix_width), Color::LightYellow, Color::Yellow);
 		}
 	}
 }
