@@ -8,11 +8,11 @@ use slab_tree::NodeRef;
 
 use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::action::file::{FileNode, get_selected_file};
-use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
+use crate::state::event::EventResult;
 use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct EditSelectedEntry;
@@ -39,7 +39,7 @@ fn open_default_editor(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &P
 	
 	// Refresh the parent directory, or the root node if this is the view root.
 	let node_id_to_refresh = node.parent_id().unwrap_or_else(|| node.node_id());
-	FsLayerEvent::RefreshViewNodeChildren(node_id_to_refresh).enqueue(&layer.pending_events);
+	layer.events().enqueue_fn(move |layer, _| EventResult::draw_if(layer.refresh_children(node_id_to_refresh)));
 	
 	ActionResult::Redraw
 }

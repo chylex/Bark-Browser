@@ -1,10 +1,7 @@
-use std::cell::RefCell;
 use std::path::Path;
-use std::rc::Rc;
 
 use slab_tree::{NodeId, NodeRef};
 
-use crate::component::filesystem::event::FsLayerPendingEvents;
 use crate::component::filesystem::registers::FsTreeRegisters;
 use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::FileOwnerNameCache;
@@ -16,7 +13,6 @@ use crate::state::layer::Layer;
 use crate::state::view::Frame;
 
 mod action;
-mod event;
 mod render;
 mod tree;
 mod registers;
@@ -27,7 +23,6 @@ pub struct FsLayer {
 	pub registers: FsTreeRegisters,
 	cursor_y: u16,
 	pending_keys: Vec<KeyBinding>,
-	pending_events: FsLayerPendingEvents,
 	event_queue: EventQueue<FsLayer>,
 	file_owner_name_cache: FileOwnerNameCache,
 	column_width_cache: Option<ColumnWidths>,
@@ -49,7 +44,6 @@ impl FsLayer {
 			cursor_y: 0,
 			registers: FsTreeRegisters::new(),
 			pending_keys: Vec::new(),
-			pending_events: Rc::new(RefCell::new(Vec::new())),
 			event_queue: EventQueue::new(),
 			file_owner_name_cache: FileOwnerNameCache::new(),
 			column_width_cache: None,
@@ -95,6 +89,36 @@ impl FsLayer {
 		let new_root_id = self.tree.traverse_up_root();
 		tree_structure_changed_if_true(self, new_root_id.is_some());
 		new_root_id
+	}
+	
+	pub fn select_child_node_by_name(&mut self, parent_view_node_id: NodeId, child_file_name: &str) -> bool {
+		self.tree.expand(parent_view_node_id);
+		
+		if let Some(parent_node) = self.tree.view.get(parent_view_node_id) {
+			for child_node in parent_node.children() {
+				if self.tree.get_entry(&child_node).is_some_and(|entry| entry.name().str() == child_file_name) {
+					self.selected_view_node_id = child_node.node_id();
+					return true;
+				}
+			}
+		}
+		
+		false
+	}
+	
+	pub fn delete_node(&mut self, view_node_id: NodeId) -> bool {
+		let view = &mut self.tree.view;
+		
+		if self.selected_view_node_id == view_node_id {
+			self.selected_view_node_id = view.get_node_below_id(view_node_id).or_else(|| view.get_node_above_id(view_node_id)).unwrap_or_else(|| view.root_id());
+		}
+		
+		if let Some(view_node) = view.remove(view_node_id) {
+			self.tree.model.remove(view_node.model_node_id());
+			true
+		} else {
+			false
+		}
 	}
 }
 
@@ -145,10 +169,6 @@ impl Layer for FsLayer {
 	}
 	
 	fn render(&mut self, frame: &mut Frame) {
-		for event in self.pending_events.take() {
-			event.handle(self);
-		}
-		
 		render::render(self, frame);
 	}
 }

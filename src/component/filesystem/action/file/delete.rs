@@ -1,6 +1,5 @@
 use std::io;
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use ratatui::style::Color;
@@ -9,11 +8,11 @@ use slab_tree::NodeId;
 
 use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::action::file::{FileNode, get_entry_kind_name, get_selected_file};
-use crate::component::filesystem::event::FsLayerEvent;
 use crate::component::filesystem::FsLayer;
 use crate::file::{FileEntry, FileKind};
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
+use crate::state::event::EventResult;
 
 pub struct DeleteSelectedEntry;
 
@@ -29,7 +28,7 @@ impl Action<FsLayer> for DeleteSelectedEntry {
 
 fn create_delete_confirmation_dialog<'a>(layer: &FsLayer, view_node_id: NodeId, entry: &FileEntry, path: PathBuf) -> MessageDialogLayer<'a> {
 	let y = layer.dialog_y();
-	let pending_events = Rc::clone(&layer.pending_events);
+	let events = layer.events();
 	
 	let total_files = if matches!(entry.kind(), FileKind::Directory) {
 		count_files(path.clone())
@@ -48,7 +47,7 @@ fn create_delete_confirmation_dialog<'a>(layer: &FsLayer, view_node_id: NodeId, 
 		.yes_no(move || {
 			match delete_path_recursively(&path) {
 				Ok(_) => {
-					FsLayerEvent::DeleteViewNode(view_node_id).enqueue(&pending_events);
+					events.enqueue_fn(move |layer, _| EventResult::draw_if(layer.delete_node(view_node_id)));
 					ActionResult::PopLayer
 				}
 				Err(e) => {

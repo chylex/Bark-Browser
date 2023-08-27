@@ -1,11 +1,13 @@
 use std::io;
 use std::path::Path;
 
-use slab_tree::NodeRef;
+use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
 use crate::file::{FileEntry, FileKind};
+use crate::state::Environment;
+use crate::state::event::{Event, EventResult};
 
 pub use self::create::*;
 pub use self::delete::*;
@@ -53,4 +55,20 @@ fn format_io_error(err: &io::Error) -> String {
 	
 	str.push('.');
 	str
+}
+
+struct RefreshParentDirectoryAndSelectFile {
+	parent_view_node_id: NodeId,
+	child_file_name: String,
+}
+
+impl Event<FsLayer> for RefreshParentDirectoryAndSelectFile {
+	fn dispatch(&self, layer: &mut FsLayer, _environment: &Environment) -> EventResult {
+		if layer.refresh_children(self.parent_view_node_id) {
+			layer.select_child_node_by_name(self.parent_view_node_id, &self.child_file_name);
+			EventResult::Draw
+		} else {
+			EventResult::Nothing
+		}
+	}
 }

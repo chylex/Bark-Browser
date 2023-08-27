@@ -1,15 +1,13 @@
 use io::ErrorKind;
 use std::{fs, io};
 use std::path::PathBuf;
-use std::rc::Rc;
 
 use ratatui::style::Color;
 use slab_tree::NodeRef;
 
 use crate::component::dialog::input::InputFieldDialogLayer;
 use crate::component::dialog::message::MessageDialogLayer;
-use crate::component::filesystem::action::file::{FileNode, format_io_error, get_entry_kind_name, get_selected_file};
-use crate::component::filesystem::event::FsLayerEvent;
+use crate::component::filesystem::action::file::{FileNode, format_io_error, get_entry_kind_name, get_selected_file, RefreshParentDirectoryAndSelectFile};
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::FsTreeViewNode;
 use crate::file::FileEntry;
@@ -35,8 +33,8 @@ impl RenameSelectedEntry {
 	#[allow(clippy::wildcard_enum_match_arm)]
 	fn create_rename_dialog<'a, 'b>(&'a self, layer: &'a FsLayer, node: &'a NodeRef<FsTreeViewNode>, entry: &'a FileEntry, path: PathBuf) -> InputFieldDialogLayer<'b> {
 		let y = layer.dialog_y();
-		let parent_node_id = node.parent_id();
-		let pending_events = Rc::clone(&layer.pending_events);
+		let events = layer.events();
+		let parent_view_node_id = node.parent_id();
 		
 		InputFieldDialogLayer::build()
 			.y(y)
@@ -48,9 +46,8 @@ impl RenameSelectedEntry {
 			.on_confirm(move |new_name| {
 				match rename_file(&path, &new_name) {
 					Ok(_) => {
-						if let Some(parent_node_id) = parent_node_id {
-							FsLayerEvent::RefreshViewNodeChildren(parent_node_id).enqueue(&pending_events);
-							FsLayerEvent::SelectViewNodeChildByFileName(parent_node_id, new_name).enqueue(&pending_events);
+						if let Some(parent_view_node_id) = parent_view_node_id {
+							events.enqueue(RefreshParentDirectoryAndSelectFile { parent_view_node_id, child_file_name: new_name });
 						}
 						ActionResult::PopLayer
 					}

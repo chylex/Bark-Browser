@@ -1,14 +1,12 @@
 use std::{fs, io};
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
 
 use ratatui::style::Color;
 use slab_tree::NodeId;
 
 use crate::component::dialog::input::InputFieldDialogLayer;
 use crate::component::dialog::message::MessageDialogLayer;
-use crate::component::filesystem::action::file::{FileNode, get_selected_file};
-use crate::component::filesystem::event::FsLayerEvent;
+use crate::component::filesystem::action::file::{FileNode, get_selected_file, RefreshParentDirectoryAndSelectFile};
 use crate::component::filesystem::FsLayer;
 use crate::file::FileKind;
 use crate::state::action::{Action, ActionResult};
@@ -105,9 +103,9 @@ fn get_parent_of_selected_file(layer: &FsLayer) -> Option<(NodeId, &Path)> {
 	get_selected_file(layer).and_then(|n| { Some((n.node.parent_id()?, n.path.parent()?)) })
 }
 
-fn create_new_name_prompt<'b, T: CreateEntry>(layer: &FsLayer, parent_folder: PathBuf, view_node_id_to_refresh: NodeId) -> InputFieldDialogLayer<'b> {
+fn create_new_name_prompt<'b, T: CreateEntry>(layer: &FsLayer, parent_folder: PathBuf, parent_view_node_id: NodeId) -> InputFieldDialogLayer<'b> {
 	let y = layer.dialog_y();
-	let pending_events = Rc::clone(&layer.pending_events);
+	let events = layer.events();
 	
 	InputFieldDialogLayer::build()
 		.y(y)
@@ -127,8 +125,7 @@ fn create_new_name_prompt<'b, T: CreateEntry>(layer: &FsLayer, parent_folder: Pa
 			
 			match T::create(new_path) {
 				Ok(_) => {
-					FsLayerEvent::RefreshViewNodeChildren(view_node_id_to_refresh).enqueue(&pending_events);
-					FsLayerEvent::SelectViewNodeChildByFileName(view_node_id_to_refresh, new_name).enqueue(&pending_events);
+					events.enqueue(RefreshParentDirectoryAndSelectFile { parent_view_node_id, child_file_name: new_name });
 					ActionResult::PopLayer
 				}
 				Err(e) => {
