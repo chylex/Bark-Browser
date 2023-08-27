@@ -47,7 +47,7 @@ fn create_delete_confirmation_dialog<'a>(layer: &FsLayer, view_node_id: NodeId, 
 		.yes_no(move || {
 			match delete_path_recursively(&path) {
 				Ok(_) => {
-					events.enqueue_fn(move |layer, _| EventResult::draw_if(layer.delete_node(view_node_id)));
+					events.enqueue_fn(move |layer, _| EventResult::draw_if(layer.tree.delete_node(view_node_id)));
 					ActionResult::PopLayer
 				}
 				Err(e) => {

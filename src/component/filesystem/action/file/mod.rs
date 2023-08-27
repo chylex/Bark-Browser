@@ -20,7 +20,7 @@ mod edit;
 mod rename;
 
 fn get_selected_file(layer: &FsLayer) -> Option<FileNode> {
-	if let Some(node) = layer.selected_node() {
+	if let Some(node) = layer.tree.selected_node() {
 		if let Some(entry) = layer.tree.get_entry(&node) {
 			if let Some(path) = entry.path() {
 				return Some(FileNode { node, entry, path });
@@ -64,8 +64,8 @@ struct RefreshParentDirectoryAndSelectFile {
 
 impl Event<FsLayer> for RefreshParentDirectoryAndSelectFile {
 	fn dispatch(&self, layer: &mut FsLayer, _environment: &Environment) -> EventResult {
-		if layer.refresh_children(self.parent_view_node_id) {
-			layer.select_child_node_by_name(self.parent_view_node_id, &self.child_file_name);
+		if layer.tree.refresh_children(self.parent_view_node_id) {
+			layer.tree.select_child_node_by_name(self.parent_view_node_id, &self.child_file_name);
 			EventResult::Draw
 		} else {
 			EventResult::Nothing

@@ -37,7 +37,7 @@ impl<A: SimpleMovementAction + 'static, C: MovementCount> MovementWithCountFacto
 impl<A: SimpleMovementAction, C: MovementCount> MovementAction for MovementWithCount<A, C> {
 	fn get_target(&self, layer: &mut FsLayer, environment: &Environment) -> Option<NodeId> where Self: Sized {
 		let count = self.0.get_count(layer.registers.count, environment);
-		Some(perform_movement_with_count(layer, Some(count), get_simple_movement_target::<A>))
+		Some(perform_movement_with_count(&mut layer.tree, Some(count), get_simple_movement_target::<A>))
 	}
 }
 

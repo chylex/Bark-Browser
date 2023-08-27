@@ -1,7 +1,7 @@
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::FsLayer;
-use crate::component::filesystem::tree::{FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 
@@ -25,7 +25,7 @@ pub trait MovementAction {
 impl<T: MovementAction> Action<FsLayer> for T {
 	fn perform(&self, layer: &mut FsLayer, environment: &Environment) -> ActionResult {
 		if let Some(target_node_id) = self.get_target(layer, environment) {
-			layer.selected_view_node_id = target_node_id;
+			layer.tree.selected_view_node_id = target_node_id;
 			ActionResult::Draw
 		} else {
 			ActionResult::Nothing
@@ -33,15 +33,19 @@ impl<T: MovementAction> Action<FsLayer> for T {
 	}
 }
 
-fn perform_movement_with_count<F>(layer: &mut FsLayer, count: Option<usize>, get_target: F) -> NodeId where F: Fn(&mut FsLayer, NodeId) -> Option<NodeId> {
-	perform_movement_with_count_from(layer, count, layer.selected_view_node_id, get_target)
+fn perform_movement_with_count_from_register<F>(layer: &mut FsLayer, get_target: F) -> NodeId where F: Fn(&mut FsTree, NodeId) -> Option<NodeId> {
+	perform_movement_with_count(&mut layer.tree, layer.registers.count, get_target)
 }
 
-fn perform_movement_with_count_from<F>(layer: &mut FsLayer, count: Option<usize>, start_node_id: NodeId, get_target: F) -> NodeId where F: Fn(&mut FsLayer, NodeId) -> Option<NodeId> {
+fn perform_movement_with_count<F>(tree: &mut FsTree, count: Option<usize>, get_target: F) -> NodeId where F: Fn(&mut FsTree, NodeId) -> Option<NodeId> {
+	perform_movement_with_count_from(tree, count, tree.selected_view_node_id, get_target)
+}
+
+fn perform_movement_with_count_from<F>(tree: &mut FsTree, count: Option<usize>, start_node_id: NodeId, get_target: F) -> NodeId where F: Fn(&mut FsTree, NodeId) -> Option<NodeId> {
 	let mut target_node_id = start_node_id;
 	
 	for _ in 0..count.unwrap_or(1) {
-		if let Some(node_id) = get_target(layer, target_node_id) {
+		if let Some(node_id) = get_target(tree, target_node_id) {
 			target_node_id = node_id;
 		} else {
 			break;
@@ -57,11 +61,10 @@ pub trait SimpleMovementAction {
 
 impl<T: SimpleMovementAction> MovementAction for T {
 	fn get_target(&self, layer: &mut FsLayer, _environment: &Environment) -> Option<NodeId> where Self: Sized {
-		Some(perform_movement_with_count(layer, layer.registers.count, get_simple_movement_target::<T>))
+		Some(perform_movement_with_count_from_register(layer, get_simple_movement_target::<T>))
 	}
 }
 
-fn get_simple_movement_target<T: SimpleMovementAction>(layer: &mut FsLayer, node_id: NodeId) -> Option<NodeId> {
-	let view = &layer.tree.view;
-	view.get(node_id).and_then(|node| T::get_target(view, &node))
+fn get_simple_movement_target<T: SimpleMovementAction>(tree: &mut FsTree, node_id: NodeId) -> Option<NodeId> {
+	tree.view.get(node_id).and_then(|node| T::get_target(&tree.view, &node))
 }

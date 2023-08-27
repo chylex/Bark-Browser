@@ -1,8 +1,8 @@
 use slab_tree::{NodeId, NodeRef};
 
-use crate::component::filesystem::action::movement::{MovementAction, perform_movement_with_count, SimpleMovementAction};
+use crate::component::filesystem::action::movement::{MovementAction, perform_movement_with_count_from_register, SimpleMovementAction};
 use crate::component::filesystem::FsLayer;
-use crate::component::filesystem::tree::{FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
 use crate::state::Environment;
 use crate::util::slab_tree::NodeRefExtensions;
 
@@ -46,19 +46,17 @@ pub struct MoveOrTraverseUpParent;
 
 impl MovementAction for MoveOrTraverseUpParent {
 	fn get_target(&self, layer: &mut FsLayer, _environment: &Environment) -> Option<NodeId> where Self: Sized {
-		Some(perform_movement_with_count(layer, layer.registers.count, Self::get_target))
+		Some(perform_movement_with_count_from_register(layer, Self::get_target))
 	}
 }
 
 impl MoveOrTraverseUpParent {
-	fn get_target(layer: &mut FsLayer, node_id: NodeId) -> Option<NodeId> {
-		let view = &layer.tree.view;
-		
-		if let Some(node) = view.get(node_id) {
-			let target_node_id = <MoveToParent as SimpleMovementAction>::get_target(view, &node);
+	fn get_target(tree: &mut FsTree, node_id: NodeId) -> Option<NodeId> {
+		if let Some(node) = tree.view.get(node_id) {
+			let target_node_id = <MoveToParent as SimpleMovementAction>::get_target(&tree.view, &node);
 			if target_node_id.is_some() {
 				return target_node_id;
-			} else if let Some(target_node_id) = layer.traverse_up_root() {
+			} else if let Some(target_node_id) = tree.traverse_up_root() {
 				return Some(target_node_id)
 			}
 		}

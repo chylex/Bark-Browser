@@ -24,7 +24,7 @@ pub fn render(layer: &mut FsLayer, frame: &mut Frame) {
 	let column_widths = get_or_update_column_widths(layer, size.width);
 	let file_owner_name_cache = &mut layer.file_owner_name_cache;
 	
-	let (rows, cursor_y) = collect_displayed_rows(&layer.tree, layer.selected_view_node_id, size.height as usize);
+	let (rows, cursor_y) = collect_displayed_rows(&layer.tree, layer.tree.selected_view_node_id, size.height as usize);
 	layer.cursor_y = cursor_y;
 	
 	frame.render_widget(Clear, size);
@@ -63,7 +63,7 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 	let mut displayed_rows = Vec::with_capacity(terminal_rows);
 	let mut cursor_y: u16 = 0;
 	
-	if let Some(middle_node) = tree.view.get(selected_node_id).or_else(|| tree.view.root()) {
+	if let Some(middle_node) = tree.selected_node().or_else(|| tree.view.root()) {
 		let middle_node_id = middle_node.node_id();
 		
 		displayed_rows.push(NodeRow::from(&middle_node, tree, middle_node_id == selected_node_id));

@@ -6,7 +6,7 @@ pub struct RefreshChildrenOfSelected;
 
 impl Action<FsLayer> for RefreshChildrenOfSelected {
 	fn perform(&self, layer: &mut FsLayer, _environment: &Environment) -> ActionResult {
-		if layer.refresh_children(layer.selected_view_node_id) {
+		if layer.tree.refresh_children(layer.tree.selected_view_node_id) {
 			ActionResult::Draw
 		} else {
 			ActionResult::Nothing

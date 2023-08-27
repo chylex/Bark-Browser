@@ -5,6 +5,7 @@ use slab_tree::NodeId;
 
 use crate::component::dialog::message::MessageDialogLayer;
 use crate::component::filesystem::FsLayer;
+use crate::component::filesystem::tree::FsTree;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 
@@ -19,13 +20,13 @@ impl Action<FsLayer> for ExpandCollapse {
 			return ActionResult::Nothing;
 		}
 		
-		if layer.expand_or_collapse(layer.selected_view_node_id) {
+		if layer.tree.expand_or_collapse(layer.tree.selected_view_node_id) {
 			if depth > 1 {
-				if let Some(node) = layer.selected_node() {
+				if let Some(node) = layer.tree.selected_node() {
 					if node.data().is_expanded() {
 						let child_node_ids = node.children().map(|node| node.node_id()).collect();
 						let remaining_depth = depth.saturating_sub(1);
-						if !expand_children_to_depth(layer, child_node_ids, remaining_depth) {
+						if !expand_children_to_depth(&mut layer.tree, child_node_ids, remaining_depth) {
 							return ActionResult::push_layer(MessageDialogLayer::build()
 								.y(layer.dialog_y())
 								.color(Color::LightYellow)
@@ -46,7 +47,7 @@ impl Action<FsLayer> for ExpandCollapse {
 
 const MAX_EXPANSION_TIME: Duration = Duration::from_secs(10);
 
-fn expand_children_to_depth(layer: &mut FsLayer, mut child_node_ids: Vec<NodeId>, max_depth: usize) -> bool {
+fn expand_children_to_depth(tree: &mut FsTree, mut child_node_ids: Vec<NodeId>, max_depth: usize) -> bool {
 	let start_time = Instant::now();
 	let mut current_pass_node_ids = Vec::new();
 	
@@ -55,8 +56,8 @@ fn expand_children_to_depth(layer: &mut FsLayer, mut child_node_ids: Vec<NodeId>
 		
 		for node_id in &current_pass_node_ids {
 			let node_id = *node_id;
-			layer.tree.expand(node_id);
-			get_child_node_ids(layer, node_id, &mut child_node_ids);
+			tree.expand(node_id);
+			get_child_node_ids(tree, node_id, &mut child_node_ids);
 			
 			if start_time.elapsed() >= MAX_EXPANSION_TIME {
 				return false;
@@ -67,8 +68,8 @@ fn expand_children_to_depth(layer: &mut FsLayer, mut child_node_ids: Vec<NodeId>
 	true
 }
 
-fn get_child_node_ids(layer: &FsLayer, node_id: NodeId, output_node_ids: &mut Vec<NodeId>) {
-	if let Some(node) = layer.tree.view.get(node_id) {
+fn get_child_node_ids(tree: &FsTree, node_id: NodeId, output_node_ids: &mut Vec<NodeId>) {
+	if let Some(node) = tree.get_view_node(node_id) {
 		for child in node.children() {
 			output_node_ids.push(child.node_id());
 		}

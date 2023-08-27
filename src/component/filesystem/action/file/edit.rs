@@ -39,7 +39,7 @@ fn open_default_editor(layer: &FsLayer, node: &NodeRef<FsTreeViewNode>, path: &P
 	
 	// Refresh the parent directory, or the root node if this is the view root.
 	let node_id_to_refresh = node.parent_id().unwrap_or_else(|| node.node_id());
-	layer.events().enqueue_fn(move |layer, _| EventResult::draw_if(layer.refresh_children(node_id_to_refresh)));
+	layer.events().enqueue_fn(move |layer, _| EventResult::draw_if(layer.tree.refresh_children(node_id_to_refresh)));
 	
 	ActionResult::Redraw
 }
