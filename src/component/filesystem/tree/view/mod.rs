@@ -2,7 +2,8 @@ use slab_tree::{NodeId, NodeMut, NodeRef, RemoveBehavior, Tree};
 
 use crate::component::filesystem::tree::FsTreeModel;
 
-mod above_below;
+pub use self::iterator::FsTreeViewIterator;
+
 mod expand_collapse;
 mod iterator;
 mod refresh;

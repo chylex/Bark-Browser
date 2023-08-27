@@ -2,6 +2,7 @@ use std::path::Path;
 
 use slab_tree::{NodeId, NodeRef};
 
+use crate::component::filesystem::tree::view::FsTreeViewIterator;
 use crate::file::FileEntry;
 
 pub use self::model::FsTreeModel;
@@ -14,7 +15,7 @@ mod view;
 
 pub struct FsTree {
 	model: FsTreeModel,
-	pub view: FsTreeView,
+	view: FsTreeView,
 	pub selected_view_node_id: NodeId,
 	structure_version: u32,
 }
@@ -42,6 +43,14 @@ impl FsTree {
 	
 	pub fn selected_node(&self) -> Option<NodeRef<FsTreeViewNode>> {
 		return self.view.get(self.selected_view_node_id);
+	}
+	
+	pub fn view_root_node(&self) -> Option<NodeRef<FsTreeViewNode>> {
+		self.view.root()
+	}
+	
+	pub fn view_iter(&self) -> FsTreeViewIterator {
+		self.view.into_iter()
 	}
 	
 	pub fn get_view_node(&self, view_node_id: NodeId) -> Option<NodeRef<FsTreeViewNode>> {
@@ -105,7 +114,7 @@ impl FsTree {
 		let view = &mut self.view;
 		
 		if self.selected_view_node_id == view_node_id {
-			self.selected_view_node_id = view.get_node_below_id(view_node_id).or_else(|| view.get_node_above_id(view_node_id)).unwrap_or_else(|| view.root_id());
+			self.selected_view_node_id = view.get(view_node_id).and_then(|node| node.below_id().or_else(|| node.above_id())).unwrap_or_else(|| view.root_id());
 		}
 		
 		if let Some(view_node) = view.remove(view_node_id) {

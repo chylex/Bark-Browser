@@ -2,13 +2,13 @@ use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::action::movement::{MovementAction, perform_movement_with_count_from_register, SimpleMovementAction};
 use crate::component::filesystem::FsLayer;
-use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::state::Environment;
 
 pub struct MoveToNextSibling;
 
 impl SimpleMovementAction for MoveToNextSibling {
-	fn get_target(_view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
 		selected_node.next_sibling_id()
 	}
 }
@@ -16,7 +16,7 @@ impl SimpleMovementAction for MoveToNextSibling {
 pub struct MoveToPreviousSibling;
 
 impl SimpleMovementAction for MoveToPreviousSibling {
-	fn get_target(_view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
 		selected_node.prev_sibling_id()
 	}
 }
@@ -24,7 +24,7 @@ impl SimpleMovementAction for MoveToPreviousSibling {
 pub struct MoveBetweenFirstAndLastSibling;
 
 impl SimpleMovementAction for MoveBetweenFirstAndLastSibling {
-	fn get_target(_view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
 		if selected_node.next_sibling().is_none() {
 			selected_node.parent().and_then(|node| node.first_child_id())
 		} else {
@@ -36,7 +36,7 @@ impl SimpleMovementAction for MoveBetweenFirstAndLastSibling {
 pub struct MoveToParent;
 
 impl SimpleMovementAction for MoveToParent {
-	fn get_target(_view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
 		selected_node.parent_id()
 	}
 }
@@ -51,8 +51,8 @@ impl MovementAction for MoveOrTraverseUpParent {
 
 impl MoveOrTraverseUpParent {
 	fn get_target(tree: &mut FsTree, node_id: NodeId) -> Option<NodeId> {
-		if let Some(node) = tree.view.get(node_id) {
-			let target_node_id = <MoveToParent as SimpleMovementAction>::get_target(&tree.view, &node);
+		if let Some(node) = tree.get_view_node(node_id) {
+			let target_node_id = <MoveToParent as SimpleMovementAction>::get_target(&node);
 			if target_node_id.is_some() {
 				return target_node_id;
 			} else if let Some(target_node_id) = tree.traverse_up_root() {

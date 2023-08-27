@@ -2,15 +2,15 @@ use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::action::movement::{get_simple_movement_target, MovementAction, MoveToParent, perform_movement_with_count_from, SimpleMovementAction};
 use crate::component::filesystem::FsLayer;
-use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::state::Environment;
 
 /// Moves up `count` lines (1 line by default).
 pub struct MoveUp;
 
 impl SimpleMovementAction for MoveUp {
-	fn get_target(tree: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
-		tree.get_node_above(selected_node)
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+		selected_node.above_id()
 	}
 }
 
@@ -18,8 +18,8 @@ impl SimpleMovementAction for MoveUp {
 pub struct MoveDown;
 
 impl SimpleMovementAction for MoveDown {
-	fn get_target(tree: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
-		tree.get_node_below(selected_node)
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
+		selected_node.below_id()
 	}
 }
 
@@ -36,7 +36,7 @@ impl MoveToFirst {
 	fn get_target(tree: &mut FsTree) -> NodeId where Self: Sized {
 		let mut target_node_id = tree.selected_view_node_id;
 		
-		while let Some(node_id) = tree.view.get(target_node_id).and_then(|node| <MoveToParent as SimpleMovementAction>::get_target(&tree.view, &node)) {
+		while let Some(node_id) = tree.get_view_node(target_node_id).and_then(|node| <MoveToParent as SimpleMovementAction>::get_target(&node)) {
 			target_node_id = node_id;
 		}
 		
@@ -50,8 +50,8 @@ pub struct MoveToLast;
 impl MovementAction for MoveToLast {
 	fn get_target(&self, layer: &mut FsLayer, _environment: &Environment) -> Option<NodeId> where Self: Sized {
 		let first_node_id = MoveToFirst::get_target(&mut layer.tree);
-		let last_node_id = layer.tree.view.get_last_descendant_or_self(first_node_id);
-		Some(last_node_id)
+		let last_node_id = layer.tree.get_view_node(first_node_id).map(|node| node.last_descendant_or_self().node_id());
+		last_node_id
 	}
 }
 

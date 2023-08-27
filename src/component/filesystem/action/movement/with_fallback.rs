@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::action::movement::SimpleMovementAction;
-use crate::component::filesystem::tree::{FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::FsTreeViewNode;
 
 /// A movement action with fallback.
 pub struct MovementWithFallback<A: SimpleMovementAction, F: SimpleMovementAction>(PhantomData<A>, PhantomData<F>);
@@ -21,7 +21,7 @@ impl<A: SimpleMovementAction, F: SimpleMovementAction> MovementWithFallbackFacto
 }
 
 impl<A: SimpleMovementAction, F: SimpleMovementAction> SimpleMovementAction for MovementWithFallback<A, F> {
-	fn get_target(view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
-		A::get_target(view, selected_node).or_else(|| F::get_target(view, selected_node))
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized {
+		A::get_target(selected_node).or_else(|| F::get_target(selected_node))
 	}
 }

@@ -7,7 +7,7 @@ use ratatui::widgets::{Clear, Widget};
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::{ColumnWidths, FsLayer};
-use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::file::{FileEntry, FileKind, FileOwnerNameCache};
 use crate::state::view::Frame;
 
@@ -37,7 +37,7 @@ fn get_or_update_column_widths(layer: &mut FsLayer, cols: u16) -> ColumnWidths {
 		let mut user: usize = 0;
 		let mut group: usize = 0;
 		
-		for node in &layer.tree.view {
+		for node in layer.tree.view_iter() {
 			let entry = layer.tree.get_entry(&node).unwrap_or_else(|| FileEntry::dummy_as_ref());
 			
 			name = max(name, get_node_level(&node).saturating_add(Span::from(entry.name().str()).width()));
@@ -63,7 +63,7 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 	let mut displayed_rows = Vec::with_capacity(terminal_rows);
 	let mut cursor_y: u16 = 0;
 	
-	if let Some(middle_node) = tree.selected_node().or_else(|| tree.view.root()) {
+	if let Some(middle_node) = tree.selected_node().or_else(|| tree.view_root_node()) {
 		let middle_node_id = middle_node.node_id();
 		
 		displayed_rows.push(NodeRow::from(&middle_node, tree, middle_node_id == selected_node_id));
@@ -72,7 +72,7 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 		let mut cursor_down_id = Some(middle_node_id);
 		
 		while displayed_rows.len() < terminal_rows {
-			if let Some(next_node_up) = move_cursor(tree, &mut cursor_up_id, FsTreeView::get_node_above) {
+			if let Some(next_node_up) = move_cursor(tree, &mut cursor_up_id, |node| node.above_id()) {
 				displayed_rows.insert(0, NodeRow::from(&next_node_up, tree, false));
 				cursor_y = cursor_y.saturating_add(1);
 			}
@@ -81,7 +81,7 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 				break;
 			}
 			
-			if let Some(next_node_down) = move_cursor(tree, &mut cursor_down_id, FsTreeView::get_node_below) {
+			if let Some(next_node_down) = move_cursor(tree, &mut cursor_down_id, |node| node.below_id()) {
 				displayed_rows.push(NodeRow::from(&next_node_down, tree, false));
 			}
 			
@@ -94,12 +94,11 @@ fn collect_displayed_rows(tree: &FsTree, selected_node_id: NodeId, terminal_rows
 	(displayed_rows, cursor_y)
 }
 
-fn move_cursor<'a, F>(tree: &'a FsTree, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, FsTreeViewNode>> where F: FnOnce(&FsTreeView, &NodeRef<FsTreeViewNode>) -> Option<NodeId> {
-	let view = &tree.view;
+fn move_cursor<'a, F>(tree: &'a FsTree, cursor: &mut Option<NodeId>, func: F) -> Option<NodeRef<'a, FsTreeViewNode>> where F: FnOnce(NodeRef<FsTreeViewNode>) -> Option<NodeId> {
 	let next_node = cursor
-		.and_then(|id| view.get(id))
-		.and_then(|node| func(view, &node))
-		.and_then(|id| view.get(id));
+		.and_then(|id| tree.get_view_node(id))
+		.and_then(func)
+		.and_then(|id| tree.get_view_node(id));
 	
 	*cursor = next_node.as_ref().map(NodeRef::node_id);
 	

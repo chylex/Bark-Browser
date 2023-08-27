@@ -1,7 +1,7 @@
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::FsLayer;
-use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
+use crate::component::filesystem::tree::{FsTree, FsTreeViewNode};
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 
@@ -56,7 +56,7 @@ fn perform_movement_with_count_from<F>(tree: &mut FsTree, count: Option<usize>, 
 }
 
 pub trait SimpleMovementAction {
-	fn get_target(view: &FsTreeView, selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized;
+	fn get_target(selected_node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> where Self: Sized;
 }
 
 impl<T: SimpleMovementAction> MovementAction for T {
@@ -66,5 +66,5 @@ impl<T: SimpleMovementAction> MovementAction for T {
 }
 
 fn get_simple_movement_target<T: SimpleMovementAction>(tree: &mut FsTree, node_id: NodeId) -> Option<NodeId> {
-	tree.view.get(node_id).and_then(|node| T::get_target(&tree.view, &node))
+	tree.get_view_node(node_id).and_then(|node| T::get_target(&node))
 }

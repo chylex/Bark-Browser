@@ -11,8 +11,8 @@ use crate::NodeId;
 /// An immutable reference to a given `Node`'s data and its relatives.
 ///
 pub struct NodeRef<'a, T> {
-    node_id: NodeId,
-    tree: &'a Tree<T>,
+    pub(super) node_id: NodeId,
+    pub(super) tree: &'a Tree<T>,
 }
 
 impl<'a, T> NodeRef<'a, T> {
@@ -276,7 +276,7 @@ impl<'a, T> NodeRef<'a, T> {
         LevelOrder::new(self, self.tree)
     }
 
-    fn get_self_as_node(&self) -> &Node<T> {
+    pub(super) fn get_self_as_node(&self) -> &Node<T> {
         if let Some(node) = self.tree.get_node(self.node_id) {
             &node
         } else {

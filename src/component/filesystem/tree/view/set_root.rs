@@ -4,13 +4,13 @@ use crate::component::filesystem::tree::{FsTreeModel, FsTreeView, FsTreeViewNode
 
 impl FsTreeView {
 	pub fn traverse_up_root(&mut self, model: &mut FsTreeModel) -> Option<NodeId> {
-		let old_moodel_root_id = model.root_id();
+		let old_model_root_id = model.root_id();
 		
 		if let Some(new_model_root_id) = model.traverse_up_root() {
 			self.set_root(new_model_root_id);
 			
 			if let Some(mut new_view_root) = self.get_mut(self.root_id) {
-				Self::resolve_new_root_children(&mut new_view_root, model, old_moodel_root_id, new_model_root_id);
+				Self::resolve_new_root_children(&mut new_view_root, model, old_model_root_id, new_model_root_id);
 				Some(self.root_id)
 			} else {
 				None
