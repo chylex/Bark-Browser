@@ -311,7 +311,6 @@ dependencies = [
 [[package]]
 name = "slab_tree"
 version = "0.3.2"
-source = "git+https://github.com/jsinger67/slab-tree.git?branch=set_root_fix#75a8dfa3b1f96f76ebe09e2e988deeffe6db54b6"
 dependencies = [
  "snowflake",
 ]

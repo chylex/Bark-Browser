@@ -42,3 +42,9 @@ Run `docker build --output out .` to build a release binary into the `out/` fold
 This project exists 1) because I couldn't find any tree-based file manager I liked and 2) because I wanted to have fun writing Rust, and I don't really want to spend time reading and reviewing pull requests.
 
 For now, issues are closed, and I'm not accepting any major contributions — especially ones related to the roadmap. If you have a small idea, issue, or pull request, feel free to start a [discussion](https://github.com/chylex/Bark-Browser/discussions).
+
+# Dependencies
+
+For a full list of dependencies, see [Cargo.toml](Cargo.toml).
+
+This repository includes the sources of [slab-tree](https://github.com/iwburns/slab-tree) (by [iwburns](https://github.com/iwburns)) with a [bug fix for `set_root`](https://github.com/iwburns/slab-tree/pull/28) (by [jsinger67](https://github.com/jsinger67)) and additional modifications from me.
