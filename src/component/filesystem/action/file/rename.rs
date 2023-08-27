@@ -3,6 +3,7 @@ use std::{fs, io};
 use std::path::PathBuf;
 
 use ratatui::style::Color;
+
 use slab_tree::NodeRef;
 
 use crate::component::dialog::input::InputFieldDialogLayer;
@@ -13,7 +14,6 @@ use crate::component::filesystem::tree::FsTreeViewNode;
 use crate::file::FileEntry;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
-use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct RenameSelectedEntry {
 	pub prefill: bool,

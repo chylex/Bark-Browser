@@ -2,6 +2,7 @@ use std::{fs, io};
 use std::path::{Path, PathBuf};
 
 use ratatui::style::Color;
+
 use slab_tree::NodeId;
 
 use crate::component::dialog::input::InputFieldDialogLayer;
@@ -11,7 +12,6 @@ use crate::component::filesystem::FsLayer;
 use crate::file::FileKind;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
-use crate::util::slab_tree::NodeRefExtensions;
 
 trait CreateEntry {
 	fn title() -> &'static str;

@@ -1,6 +1,8 @@
+mod bark_extensions;
 mod node_mut;
 mod node_ref;
 
+pub use self::bark_extensions::*;
 pub use self::node_mut::NodeMut;
 pub use self::node_ref::NodeRef;
 

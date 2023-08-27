@@ -1,7 +1,6 @@
 use slab_tree::{NodeId, NodeRef};
 
 use crate::component::filesystem::tree::{FsTreeView, FsTreeViewNode};
-use crate::util::slab_tree::NodeRefExtensions;
 
 impl FsTreeView {
 	pub fn get_node_above(&self, node: &NodeRef<FsTreeViewNode>) -> Option<NodeId> {

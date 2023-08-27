@@ -4,7 +4,6 @@ use crate::component::filesystem::action::movement::{MovementAction, perform_mov
 use crate::component::filesystem::FsLayer;
 use crate::component::filesystem::tree::{FsTree, FsTreeView, FsTreeViewNode};
 use crate::state::Environment;
-use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct MoveToNextSibling;
 

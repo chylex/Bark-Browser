@@ -5,7 +5,6 @@ use slab_tree::NodeId;
 
 use crate::component::filesystem::tree::{FsTreeModel, FsTreeModelNode};
 use crate::file::FileEntry;
-use crate::util::slab_tree::{NodeMutExtensions, NodeRefExtensions};
 
 impl FsTreeModel {
 	pub fn resolve_children(&mut self, node_id: NodeId) -> Option<Vec<NodeId>> {

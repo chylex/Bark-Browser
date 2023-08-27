@@ -13,7 +13,6 @@ use crate::component::filesystem::tree::FsTreeViewNode;
 use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::state::event::EventResult;
-use crate::util::slab_tree::NodeRefExtensions;
 
 pub struct EditSelectedEntry;
 
