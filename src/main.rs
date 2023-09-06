@@ -50,10 +50,12 @@
 #![allow(clippy::redundant_else)]
 
 use std::env;
-use std::error::Error;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+
+use crate::state::init::StateInitializer;
+use crate::state::view::View;
 
 mod app;
 mod component;
@@ -65,11 +67,11 @@ mod util;
 const VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
 
 #[allow(clippy::print_stdout)]
-fn main() -> Result<ExitCode, Box<dyn Error>> {
+fn main() -> ExitCode {
 	let args = env::args_os().skip(1).collect::<Vec<_>>();
 	if args.len() == 1 && args.get(0).is_some_and(|arg| arg == "-v" || arg == "--version") {
 		println!("{}", VERSION.unwrap_or("unknown"));
-		return Ok(ExitCode::SUCCESS);
+		return ExitCode::SUCCESS;
 	}
 	
 	#[allow(clippy::indexing_slicing)] // Guarded by condition.
@@ -81,21 +83,20 @@ fn main() -> Result<ExitCode, Box<dyn Error>> {
 	
 	if args.len() > 1 {
 		println!("Too many arguments!");
-		return Ok(ExitCode::SUCCESS);
+		return ExitCode::FAILURE;
 	}
 	
 	match get_start_path(args.get(0)) {
 		StartPathResult::Ok(path) => {
-			app::run(&path)?;
-			Ok(ExitCode::SUCCESS)
+			prepare_and_run_app(&path)
 		},
 		StartPathResult::InvalidPathArgument(path) => {
 			println!("Invalid path: {}", path.to_string_lossy());
-			Ok(ExitCode::FAILURE)
+			ExitCode::FAILURE
 		},
 		StartPathResult::InvalidWorkingDirectory => {
 			println!("Invalid working directory!");
-			Ok(ExitCode::FAILURE)
+			ExitCode::FAILURE
 		}
 	}
 }
@@ -117,5 +118,45 @@ fn get_start_path(path_arg: Option<&OsString>) -> StartPathResult {
 		StartPathResult::Ok(path)
 	} else {
 		StartPathResult::InvalidWorkingDirectory
+	}
+}
+
+#[allow(clippy::print_stdout)]
+fn prepare_and_run_app(start_path: &Path) -> ExitCode {
+	match component::filesystem::defaults::get_action_map() {
+		Ok(action_map) => {
+			run_app(&StateInitializer {
+				filesystem_start_path: start_path,
+				filesystem_action_map: action_map,
+			})
+		},
+		Err(e) => {
+			println!("Failed to initialize action map, could not insert key sequence: '{}'\nReason: {}", e.sequence(), e.error());
+			ExitCode::FAILURE
+		}
+	}
+}
+
+#[allow(clippy::print_stdout)]
+fn run_app(state_initializer: &StateInitializer) -> ExitCode {
+	View::restore_terminal_on_panic();
+	
+	match View::stdout() {
+		Err(e) => {
+			View::restore_terminal();
+			println!("Failed to initialize terminal: {e}");
+			ExitCode::FAILURE
+		}
+		Ok(mut view) => {
+			let result = app::run(state_initializer, &mut view);
+			let _ = view.close();
+			
+			if let Err(e) = result {
+				println!("Runtime error: {e}");
+				ExitCode::FAILURE
+			} else {
+				ExitCode::SUCCESS
+			}
+		},
 	}
 }

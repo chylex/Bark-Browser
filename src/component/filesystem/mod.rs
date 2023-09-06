@@ -3,23 +3,28 @@ use std::path::Path;
 use crate::component::filesystem::registers::FsTreeRegisters;
 use crate::component::filesystem::tree::FsTree;
 use crate::file::FileOwnerNameCache;
-use crate::input::keymap::{KeyBinding, KeyMapLookupResult};
-use crate::state::action::ActionResult;
+use crate::input::keymap::{KeyBinding, KeyMap, KeyMapLookupResult};
+use crate::state::action::{Action, ActionResult};
 use crate::state::Environment;
 use crate::state::event::{EventQueue, EventResult};
 use crate::state::layer::Layer;
 use crate::state::view::Frame;
 
 mod action;
+mod command;
+mod registers;
 mod render;
 mod tree;
-mod registers;
+pub mod defaults;
+
+pub type ActionKeyMap = KeyMap<Box<dyn Action<FsLayer> + Sync>>;
 
 pub struct FsLayer {
+	action_map: &'static ActionKeyMap,
 	pub tree: FsTree,
 	tree_structure_version: u32,
-	pub registers: FsTreeRegisters,
 	cursor_y: u16,
+	pub registers: FsTreeRegisters,
 	pending_keys: Vec<KeyBinding>,
 	event_queue: EventQueue<FsLayer>,
 	file_owner_name_cache: FileOwnerNameCache,
@@ -27,11 +32,9 @@ pub struct FsLayer {
 }
 
 impl FsLayer {
-	pub fn with_root_path(root_path: &Path) -> Self {
-		// Initialize action map early in case it errors.
-		let _ = *action::ACTION_MAP;
-		
+	pub fn new(root_path: &Path, action_map: &'static ActionKeyMap) -> Self {
 		Self {
+			action_map,
 			tree: FsTree::with_root_path(root_path),
 			tree_structure_version: 0,
 			cursor_y: 0,
@@ -56,7 +59,7 @@ impl Layer for FsLayer {
 	fn handle_input(&mut self, environment: &Environment, key_binding: KeyBinding) -> ActionResult {
 		self.pending_keys.push(key_binding);
 		
-		match action::ACTION_MAP.lookup(&self.pending_keys) {
+		match self.action_map.lookup(&self.pending_keys) {
 			KeyMapLookupResult::Prefix => {
 				ActionResult::Nothing
 			}

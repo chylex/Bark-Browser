@@ -30,9 +30,13 @@ impl View {
 		let prev_hook = panic::take_hook();
 		
 		panic::set_hook(Box::new(move |panic_info| {
-			let _ = terminal::disable_raw_mode();
+			Self::restore_terminal();
 			prev_hook(panic_info);
 		}));
+	}
+	
+	pub fn restore_terminal() {
+		let _ = terminal::disable_raw_mode();
 	}
 	
 	pub fn close(mut self) -> io::Result<()> {

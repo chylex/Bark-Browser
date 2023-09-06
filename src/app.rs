@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::io;
 
 use crossterm::event::{Event, KeyEventKind};
 
@@ -6,14 +6,12 @@ use crate::input::keymap::KeyBinding;
 use crate::state::{Environment, State};
 use crate::state::action::ActionResult;
 use crate::state::event::EventResult;
+use crate::state::init::StateInitializer;
 use crate::state::view::View;
 
-pub fn run(start_path: &Path) -> std::io::Result<()> {
-	View::restore_terminal_on_panic();
-	let mut view = View::stdout()?;
-	
-	let environment = Environment::try_from(&view)?;
-	let mut state = State::with_root_path(start_path, environment);
+pub fn run(state_initializer: &StateInitializer, view: &mut View) -> io::Result<()> {
+	let environment = Environment::try_from(&*view)?;
+	let mut state = State::new(state_initializer, environment);
 	
 	loop {
 		match state.handle_events() {
@@ -69,7 +67,7 @@ pub fn run(start_path: &Path) -> std::io::Result<()> {
 		}
 	}
 	
-	view.close()
+	Ok(())
 }
 
 #[allow(clippy::needless_pass_by_value)]

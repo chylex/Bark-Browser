@@ -1,9 +1,8 @@
-use std::path::Path;
-
 use crate::component::filesystem::FsLayer;
 use crate::input::keymap::KeyBinding;
 use crate::state::action::ActionResult;
 use crate::state::event::EventResult;
+use crate::state::init::StateInitializer;
 use crate::state::layer::Layer;
 use crate::state::view::Frame;
 
@@ -12,6 +11,7 @@ pub use self::environment::Environment;
 mod environment;
 pub mod action;
 pub mod event;
+pub mod init;
 pub mod layer;
 pub mod view;
 
@@ -21,9 +21,9 @@ pub struct State {
 }
 
 impl State {
-	pub fn with_root_path(root_path: &Path, environment: Environment) -> Self {
+	pub fn new(initializer: &StateInitializer, environment: Environment) -> Self {
 		Self {
-			layers: vec![Box::new(FsLayer::with_root_path(root_path))],
+			layers: vec![Box::new(FsLayer::new(initializer.filesystem_start_path, initializer.filesystem_action_map))],
 			environment
 		}
 	}
